@@ -33,6 +33,7 @@
 #include <ogdf/energybased/FMMMLayout.h>
 #include "../program/graphlayoutworker.h"
 #include "../program/memory.h"
+#include <QDebug>
 
 
 AssemblyGraph::AssemblyGraph() :
@@ -729,8 +730,170 @@ void AssemblyGraph::buildDeBruijnGraphFromFastg(QString fullFileName)
 
     autoDetermineAllEdgesExactOverlap();
 
+    qDebug("no fun") ;
     if (m_deBruijnGraphNodes.size() == 0)
         throw "load error";
+}
+void AssemblyGraph::buildDeBruijnGraphFromFastgBC(QString fullFileName, QString mappingFileName)
+{
+    m_graphFileType = FASTG;
+
+    QFile inputFile(fullFileName);
+    if (inputFile.open(QIODevice::ReadOnly))
+    {
+        std::vector<QString> edgeStartingNodeNames;
+        std::vector<QString> edgeEndingNodeNames;
+        DeBruijnNode * node = 0;
+
+        QTextStream in(&inputFile);
+        while (!in.atEnd())
+        {
+            QApplication::processEvents();
+
+            QString nodeName;
+            double nodeReadDepth;
+
+            QString line = in.readLine();
+
+            //If the line starts with a '>', then we are beginning a new node.
+            if (line.startsWith(">"))
+            {
+                line.remove(0, 1); //Remove '>' from start
+                line.chop(1); //Remove ';' from end
+                QStringList nodeDetails = line.split(":");
+
+                QString thisNode = nodeDetails.at(0);
+
+                //A single quote as the last character indicates a negative node.
+                bool negativeNode = thisNode.at(thisNode.size() - 1) == '\'';
+
+                QStringList thisNodeDetails = thisNode.split("_");
+
+                if (thisNodeDetails.size() < 6)
+                    throw "load error";
+
+                nodeName = thisNodeDetails.at(1);
+                if (negativeNode)
+                    nodeName += "-";
+                else
+                    nodeName += "+";
+
+                QString nodeReadDepthString = thisNodeDetails.at(5);
+                if (negativeNode)
+                {
+                    //It may be necessary to remove a single quote from the end of the read depth
+                    if (nodeReadDepthString.at(nodeReadDepthString.size() - 1) == '\'')
+                        nodeReadDepthString.chop(1);
+                }
+                nodeReadDepth = nodeReadDepthString.toDouble();
+
+                //Make the node
+                node = new DeBruijnNode(nodeName, nodeReadDepth, ""); //Sequence string is currently empty - will be added to on subsequent lines of the fastg file
+                m_deBruijnGraphNodes.insert(nodeName, node);
+
+                //The second part of nodeDetails is a comma-delimited list of edge nodes.
+                //Edges aren't made right now (because the other node might not yet exist),
+                //so they are saved into vectors and made after all the nodes have been made.
+                if (nodeDetails.size() == 1)
+                    continue;
+                QStringList edgeNodes = nodeDetails.at(1).split(",");
+                for (int i = 0; i < edgeNodes.size(); ++i)
+                {
+                    QString edgeNode = edgeNodes.at(i);
+
+                    QChar lastChar = edgeNode.at(edgeNode.size() - 1);
+                    bool negativeNode = false;
+                    if (lastChar == '\'')
+                    {
+                        negativeNode = true;
+                        edgeNode.chop(1);
+                    }
+                    QStringList edgeNodeDetails = edgeNode.split("_");
+
+                    if (edgeNodeDetails.size() < 2)
+                        throw "load error";
+
+                    QString edgeNodeName = edgeNodeDetails.at(1);
+                    if (negativeNode)
+                        edgeNodeName += "-";
+                    else
+                        edgeNodeName += "+";
+
+                    edgeStartingNodeNames.push_back(nodeName);
+                    edgeEndingNodeNames.push_back(edgeNodeName);
+                }
+            }
+
+            //If the line does not start with a '>', then this line is part of the
+            //sequence for the last node.
+            else
+            {
+                QByteArray sequenceLine = line.simplified().toLocal8Bit();
+                if (node != 0)
+                    node->appendToSequence(sequenceLine);
+            }
+        }
+
+        inputFile.close();
+
+        //If all went well, each node will have a reverse complement and the code
+        //will never get here.  However, I have noticed that some SPAdes fastg files
+        //have, for some reason, negative nodes with no positive counterpart.  For
+        //that reason, we will now make any reverse complement nodes for nodes that
+        //lack them.
+        QMapIterator<QString, DeBruijnNode*> i(m_deBruijnGraphNodes);
+        while (i.hasNext())
+        {
+            i.next();
+            DeBruijnNode * node = i.value();
+            makeReverseComplementNodeIfNecessary(node);
+        }
+        pointEachNodeToItsReverseComplement();
+
+
+        //Create all of the edges
+        for (size_t i = 0; i < edgeStartingNodeNames.size(); ++i)
+        {
+            QString node1Name = edgeStartingNodeNames[i];
+            QString node2Name = edgeEndingNodeNames[i];
+            createDeBruijnEdge(node1Name, node2Name);
+        }
+    }
+
+    autoDetermineAllEdgesExactOverlap();
+
+    if (m_deBruijnGraphNodes.size() == 0)
+        throw "load error";
+
+    QFile mapping_inputFile(mappingFileName);
+    if (mapping_inputFile.open(QIODevice::ReadOnly))
+    {
+        QTextStream map_in(&mapping_inputFile);
+        while (!map_in.atEnd())
+        {
+            QApplication::processEvents();
+            QString line = map_in.readLine();
+            QStringList barcode_info = line.split(",");
+            QString barcode_ = barcode_info[0];
+            QString node_name = barcode_info[1];
+            int pos = barcode_info[2].toInt();
+            int strand = barcode_info[3].toInt();
+            //qDebug("hi") ;
+            QString node_name1 = node_name + "+";
+            QString node_name2 = node_name + "-";
+            if (m_deBruijnGraphNodes.contains(node_name1) && m_deBruijnGraphNodes.contains(node_name2)) {
+                Barcode * bc = new Barcode( barcode_, node_name, pos,  strand);
+                m_deBruijnGraphNodes[node_name1]->addBarcode(bc);
+                m_deBruijnGraphNodes[node_name2]->addBarcode(bc);
+
+                if (!this->barocde_map.contains(node_name))
+                {
+                    this->barocde_map[node_name] = std::vector<Barcode *> ();
+                }
+                this->barocde_map[node_name].push_back(bc);
+            }
+        }
+    }
 }
 
 
@@ -900,7 +1063,13 @@ GraphFileType AssemblyGraph::getGraphFileTypeFromFile(QString fullFileName)
     if (checkFileIsLastGraph(fullFileName))
         return LAST_GRAPH;
     if (checkFileIsFastG(fullFileName))
-        return FASTG;
+    {
+        qDebug()<<fullFileName + ".barcode";
+        if (fileExists(fullFileName + ".barcode"))
+            return FASTG_BC;
+        else
+            return FASTG;
+    }
     if (checkFileIsGfa(fullFileName))
         return GFA;
     if (checkFileIsTrinityFasta(fullFileName))
@@ -919,6 +1088,12 @@ bool AssemblyGraph::checkFileIsLastGraph(QString fullFileName)
 bool AssemblyGraph::checkFileIsFastG(QString fullFileName)
 {
     return checkFirstLineOfFile(fullFileName, ">NODE");
+}
+
+
+bool AssemblyGraph::checkFileIsFastG_barcode(QString fullFileName)
+{
+    return checkFirstLineOfFile(fullFileName, "BARCODE");
 }
 
 //Cursory look to see if file appears to be a GFA file.
@@ -944,6 +1119,7 @@ bool AssemblyGraph::checkFirstLineOfFile(QString fullFileName, QString regExp)
             return false;
         QRegExp rx(regExp);
         QString line = in.readLine();
+        qDebug()<<line;
         if (rx.indexIn(line) != -1)
             return true;
     }
@@ -1502,5 +1678,16 @@ void AssemblyGraph::recalculateAllNodeWidths()
         GraphicsItemNode * graphicsItemNode = i.value()->getGraphicsItemNode();
         if (graphicsItemNode != 0)
             graphicsItemNode->setWidth();
+    }
+}
+
+
+bool AssemblyGraph::fileExists(QString path) {
+    QFileInfo checkFile(path);
+    // check if file exists and if yes: Is it really a file and no directory?
+    if (checkFile.exists() && checkFile.isFile()) {
+        return true;
+    } else {
+        return false;
     }
 }

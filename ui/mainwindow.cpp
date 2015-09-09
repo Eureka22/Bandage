@@ -63,6 +63,8 @@
 #include "../graph/path.h"
 #include "pathspecifydialog.h"
 #include "../program/memory.h"
+#include <QDebug>
+#include "program/globals.h"
 
 MainWindow::MainWindow(QString fileToLoadOnStartup, bool drawGraphAfterLoad) :
     QMainWindow(0),
@@ -145,6 +147,8 @@ MainWindow::MainWindow(QString fileToLoadOnStartup, bool drawGraphAfterLoad) :
     connect(ui->actionSettings, SIGNAL(triggered()), this, SLOT(openSettingsDialog()));
     connect(ui->selectNodesButton, SIGNAL(clicked()), this, SLOT(selectUserSpecifiedNodes()));
     connect(ui->selectionSearchNodesLineEdit, SIGNAL(returnPressed()), this, SLOT(selectUserSpecifiedNodes()));
+    connect(ui->setBarcodeButton, SIGNAL(clicked()), this, SLOT(selectUserSpecifiedBarcodes()));
+    connect(ui->barcodeInput, SIGNAL(returnPressed()), this, SLOT(selectUserSpecifiedBarcodes()));
     connect(ui->actionAbout, SIGNAL(triggered()), this, SLOT(openAboutDialog()));
     connect(ui->blastSearchButton, SIGNAL(clicked()), this, SLOT(openBlastSearchDialog()));
     connect(ui->blastQueryComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(blastQueryChanged()));
@@ -256,7 +260,7 @@ void MainWindow::loadGraph(QString fullFileName)
     QString selectedFilter = "Any supported graph (*)";
     if (fullFileName == "")
         fullFileName = QFileDialog::getOpenFileName(this, "Load graph", g_memory->rememberedPath,
-                                                    "Any supported graph (*);;LastGraph (*LastGraph*);;FASTG (*.fastg);;GFA (*.gfa);;Trinity.fasta (*.fasta)",
+                                                    "Any supported graph (*);;LastGraph (*LastGraph*);;FASTG (*.fastg);;FASTG with barcodes(*.fastgbc);;GFA (*.gfa);;Trinity.fasta (*.fasta)",
                                                     &selectedFilter);
 
     if (fullFileName != "") //User did not hit cancel
@@ -266,6 +270,8 @@ void MainWindow::loadGraph(QString fullFileName)
         GraphFileType selectedFileType = ANY_FILE_TYPE;
         if (selectedFilter == "LastGraph (*LastGraph*)")
             selectedFileType = LAST_GRAPH;
+        else if (selectedFilter == "FASTGBC (*.fastgbc)")
+            selectedFileType = FASTG_BC;
         else if (selectedFilter == "FASTG (*.fastg)")
             selectedFileType = FASTG;
         else if (selectedFilter == "GFA (*.gfa)")
@@ -300,7 +306,7 @@ void MainWindow::loadGraph(QString fullFileName)
             if (reply == QMessageBox::No)
                 return;
         }
-
+        qDebug() << selectedFileType;
         loadGraph2(selectedFileType, fullFileName);
     }
 }
@@ -322,6 +328,8 @@ void MainWindow::loadGraph2(GraphFileType graphFileType, QString fullFileName)
             g_assemblyGraph->buildDeBruijnGraphFromLastGraph(fullFileName);
         else if (graphFileType == FASTG)
             g_assemblyGraph->buildDeBruijnGraphFromFastg(fullFileName);
+        else if (graphFileType == FASTG_BC)
+            g_assemblyGraph->buildDeBruijnGraphFromFastgBC(fullFileName, fullFileName+".barcode");
         else if (graphFileType == GFA)
             g_assemblyGraph->buildDeBruijnGraphFromGfa(fullFileName);
         else if (graphFileType == TRINITY)
@@ -987,6 +995,12 @@ void MainWindow::switchColourScheme()
         ui->contiguityButton->setVisible(false);
         ui->contiguityInfoText->setVisible(false);
         break;
+    case 7:
+        g_settings->nodeColourScheme = BARCODE_COLOR;
+        ui->contiguityButton->setVisible(false);
+        ui->contiguityInfoText->setVisible(false);
+        break;
+
     }
 
     g_assemblyGraph->resetAllNodeColours();
@@ -1369,6 +1383,103 @@ void MainWindow::openSettingsDialog()
         g_graphicsView->viewport()->update();
     }
 }
+
+
+
+void MainWindow::selectUserSpecifiedBarcodes()
+{
+
+
+
+    g_barcode_selected->append(ui->barcodeInput->text());
+    ui->barcodeInput->clear();
+    qDebug() << g_barcode_selected;
+    for (int i = 0; i<g_barcode_selected->size(); i++ )
+        qDebug() << g_barcode_selected->at(i);
+
+    //QMessageBox::information(this, "Barcodes not found", "ohh");
+    /*if (g_assemblyGraph->checkIfStringHasNodes(ui->selectionSearchNodesLineEdit->text()))
+    {
+        QMessageBox::information(this, "No starting nodes",
+                                 "Please enter at least one node when drawing the graph using the 'Around node(s)' scope. "
+                                 "Separate multiple nodes with commas.");
+        return;
+    }
+
+
+
+
+    if (ui->selectionSearchNodesLineEdit->text().length() == 0)
+    {
+        QMessageBox::information(this, "No nodes given", "Please enter the numbers of the nodes to find, separated by commas.");
+        return;
+    }
+
+    m_scene->blockSignals(true);
+    m_scene->clearSelection();
+    std::vector<QString> nodesNotInGraph;
+    std::vector<DeBruijnNode *> nodesToSelect = getNodesFromLineEdit(ui->selectionSearchNodesLineEdit,
+                                                                     ui->selectionSearchNodesExactMatchRadioButton->isChecked(),
+                                                                     &nodesNotInGraph);
+
+    //Select each node that actually has a GraphicsItemNode, and build a bounding
+    //rectangle so the viewport can focus on the selected node.
+    std::vector<QString> nodesNotFound;
+    int foundNodes = 0;
+    for (size_t i = 0; i < nodesToSelect.size(); ++i)
+    {
+        GraphicsItemNode * graphicsItemNode = nodesToSelect[i]->getGraphicsItemNode();
+
+        //If the GraphicsItemNode isn't found, try the reverse complement.  This
+        //is only done for single node mode.
+        if (graphicsItemNode == 0 && !g_settings->doubleMode)
+            graphicsItemNode = nodesToSelect[i]->getReverseComplement()->getGraphicsItemNode();
+
+        if (graphicsItemNode != 0)
+        {
+            graphicsItemNode->setSelected(true);
+            ++foundNodes;
+        }
+        else
+            nodesNotFound.push_back(nodesToSelect[i]->getName());
+    }
+
+    if (foundNodes > 0)
+        zoomToSelection();
+
+    if (nodesNotInGraph.size() > 0 || nodesNotFound.size() > 0)
+    {
+        QString errorMessage;
+        if (nodesNotInGraph.size() > 0)
+        {
+            errorMessage += g_assemblyGraph->generateNodesNotFoundErrorMessage(nodesNotInGraph,
+                                                                               ui->selectionSearchNodesExactMatchRadioButton->isChecked());
+        }
+        if (nodesNotFound.size() > 0)
+        {
+            if (errorMessage.length() > 0)
+                errorMessage += "\n";
+            errorMessage += "The following nodes are in the graph but not currently displayed:\n";
+            for (size_t i = 0; i < nodesNotFound.size(); ++i)
+            {
+                errorMessage += nodesNotFound[i];
+                if (i != nodesNotFound.size() - 1)
+                    errorMessage += ", ";
+            }
+            errorMessage += "\n\nRedraw the graph with an increased scope to see these nodes.\n";
+        }
+        QMessageBox::information(this, "Nodes not found", errorMessage);
+    }
+
+    m_scene->blockSignals(false);
+    g_graphicsView->viewport()->update();
+    selectionChanged();*/
+}
+
+
+
+
+
 
 void MainWindow::selectUserSpecifiedNodes()
 {

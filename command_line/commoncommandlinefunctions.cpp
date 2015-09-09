@@ -770,6 +770,8 @@ NodeColourScheme getColourSchemeOption(QString option, QStringList * arguments)
         return BLAST_HITS_SOLID_COLOUR;
     else if (colourString == "blastrainbow")
         return BLAST_HITS_RAINBOW_COLOUR;
+    else if (colourString == "barcode")
+        return BARCODE_COLOR;
 
     //Random colours is the default
     return defaultScheme;

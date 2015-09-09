@@ -115,6 +115,7 @@ private slots:
     void openSettingsDialog();
     void openAboutDialog();
     void selectUserSpecifiedNodes();
+    void selectUserSpecifiedBarcodes();
     void graphLayoutFinished();
     void openBlastSearchDialog();
     void blastChanged();

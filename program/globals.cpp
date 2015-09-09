@@ -33,6 +33,7 @@ QSharedPointer<BlastSearch> g_blastSearch;
 QString m_tempDirectory;
 QSharedPointer<AssemblyGraph> g_assemblyGraph;
 
+QSharedPointer<QStringList> g_barcode_selected;
 
 QString formatIntForDisplay(int num)
 {

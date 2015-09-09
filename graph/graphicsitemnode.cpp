@@ -150,6 +150,54 @@ void GraphicsItemNode::paint(QPainter * painter, const QStyleOptionGraphicsItem 
     }
 
 
+
+/*
+    if (nodeHasBlastHits && (g_settings->nodeColourScheme == BLAST_HITS_RAINBOW_COLOUR ||
+            g_settings->nodeColourScheme == BLAST_HITS_SOLID_COLOUR))
+    {
+        std::vector<BlastHitPart> parts;
+
+        //The scaled node length is passed to the function which makes the
+        //BlastHitPart objects, because we don't want those parts to be much
+        //less than 1 pixel in size, which isn't necessary and can cause weird
+        //visual artefacts.
+        double scaledNodeLength = getNodePathLength() * g_absoluteZoom;
+
+        if (g_settings->doubleMode)
+        {
+            if (m_deBruijnNode->thisNodeHasBlastHits())
+                parts = m_deBruijnNode->getBlastHitPartsForThisNode(scaledNodeLength);
+        }
+        else
+        {
+            if (m_deBruijnNode->thisNodeOrReverseComplementHasBlastHits())
+                parts = m_deBruijnNode->getBlastHitPartsForThisNodeOrReverseComplement(scaledNodeLength);
+        }
+
+        QPen partPen;
+        partPen.setWidthF(m_width);
+        partPen.setCapStyle(Qt::FlatCap);
+        partPen.setJoinStyle(Qt::BevelJoin);
+
+        //If the node has an arrow, then it's necessary to use the outline
+        //as a clipping path so the colours don't extend past the edge of the
+        //node.
+        if (m_hasArrow)
+            painter->setClipPath(outlinePath);
+
+        for (size_t i = 0; i < parts.size(); ++i)
+        {
+            partPen.setColor(parts[i].m_colour);
+            painter->setPen(partPen);
+
+            painter->drawPath(makePartialPath(parts[i].m_nodeFractionStart,
+                                              parts[i].m_nodeFractionEnd));
+        }
+        painter->setClipping(false);
+    }
+
+*/
+
     //Draw the node outline
     QColor outlineColour = g_settings->outlineColour;
     double outlineThickness = g_settings->outlineThickness;

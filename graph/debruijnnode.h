@@ -25,6 +25,7 @@
 #include "../program/globals.h"
 #include <QColor>
 #include "../blast/blasthitpart.h"
+#include "barcode.h"
 
 class OgdfNode;
 class DeBruijnEdge;
@@ -74,6 +75,8 @@ public:
     DeBruijnEdge * doesNodeLeadIn(DeBruijnNode * node) const;
     DeBruijnEdge * doesNodeLeadAway(DeBruijnNode * node) const;
     std::vector<BlastHitPart> getBlastHitPartsForThisNode(double scaledNodeLength) const;
+    std::vector<BarcodePart> getBarcodePartsForThisNode(double scaledNodeLength) const;
+
     std::vector<BlastHitPart> getBlastHitPartsForThisNodeOrReverseComplement(double scaledNodeLength) const;
 
     //MODIFERS
@@ -96,6 +99,7 @@ public:
     void clearBlastHits() {m_blastHits.clear();}
     void addBlastHit(BlastHit * newHit) {m_blastHits.push_back(newHit);}
     void labelNeighbouringNodesAsDrawn(int nodeDistance, DeBruijnNode * callingNode);
+    void addBarcode(Barcode * bc) { m_barcodes.push_back(bc) ;}
 
 private:
     QString m_name;
@@ -113,6 +117,8 @@ private:
     QColor m_customColour;
     QString m_customLabel;
     std::vector<BlastHit *> m_blastHits;
+
+    std::vector<Barcode *>m_barcodes;
 
     int getBasePairsPerSegment() const;
     bool isOnlyPathInItsDirection(DeBruijnNode * connectedNode,

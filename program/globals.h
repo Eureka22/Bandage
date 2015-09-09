@@ -32,7 +32,7 @@ class AssemblyGraph;
 
 enum NodeColourScheme {ONE_COLOUR, RANDOM_COLOURS, READ_DEPTH_COLOUR,
                        BLAST_HITS_RAINBOW_COLOUR, BLAST_HITS_SOLID_COLOUR,
-                       CONTIGUITY_COLOUR, CUSTOM_COLOURS};
+                       CONTIGUITY_COLOUR, BARCODE_COLOR, CUSTOM_COLOURS};
 enum GraphScope {WHOLE_GRAPH, AROUND_NODE, AROUND_BLAST_HITS};
 enum ContiguityStatus {STARTING, CONTIGUOUS_STRAND_SPECIFIC,
                        CONTIGUOUS_EITHER_STRAND, MAYBE_CONTIGUOUS,
@@ -41,7 +41,7 @@ enum NodeDragging {ONE_PIECE, NEARBY_PIECES, ALL_PIECES};
 enum ZoomSource {MOUSE_WHEEL, SPIN_BOX, KEYBOARD};
 enum UiState {NO_GRAPH_LOADED, GRAPH_LOADED, GRAPH_DRAWN};
 enum NodeLengthMode {AUTO_NODE_LENGTH, MANUAL_NODE_LENGTH};
-enum GraphFileType {LAST_GRAPH, FASTG, GFA, TRINITY, ANY_FILE_TYPE,
+enum GraphFileType {LAST_GRAPH, FASTG, GFA, TRINITY, FASTG_BC, ANY_FILE_TYPE,
                     UNKNOWN_FILE_TYPE};
 enum SequenceType {NUCLEOTIDE, PROTEIN, EITHER_NUCLEOTIDE_OR_PROTEIN};
 enum BlastUiState {BLAST_DB_NOT_YET_BUILT, BLAST_DB_BUILD_IN_PROGRESS,
@@ -62,6 +62,7 @@ extern MyGraphicsView * g_graphicsView;
 extern double g_absoluteZoom;
 extern QSharedPointer<BlastSearch> g_blastSearch;
 extern QSharedPointer<AssemblyGraph> g_assemblyGraph;
+extern QSharedPointer<QStringList> g_barcode_selected;
 
 
 //Functions for formatting numbers are used in many places, and are made global.

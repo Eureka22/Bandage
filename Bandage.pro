@@ -73,7 +73,9 @@ SOURCES += \
     program/memory.cpp \
     ui/querypathspushbutton.cpp \
     ui/querypathsdialog.cpp \
-    blast/blastquerypath.cpp
+    blast/blastquerypath.cpp \
+    graph/barcode.cpp \
+    graph/barcodepart.cpp
 
 HEADERS  += \
     program/settings.h \
@@ -121,7 +123,9 @@ HEADERS  += \
     graph/querydistance.h \
     ui/querypathspushbutton.h \
     ui/querypathsdialog.h \
-    blast/blastquerypath.h
+    blast/blastquerypath.h \
+    graph/barcode.h \
+    graph/barcodepart.h
 
 FORMS    += \
     ui/mainwindow.ui \
@@ -136,12 +140,12 @@ FORMS    += \
 
 # These includes are configured assuming that the OGDF
 # directory is next to the Bandage project directory.
-unix:INCLUDEPATH += /usr/include/
+unix:INCLUDEPATH +=  /usr/include/
 unix:LIBS += -L/usr/lib
-unix:QMAKE_CXXFLAGS += -isystem ../OGDF #prevents compilers warnings for OGDF
+unix:QMAKE_CXXFLAGS += -isystem ../OGDF/ #prevents compilers warnings for OGDF
 unix:LIBS += -L$$PWD/../OGDF/_release
 unix:LIBS += -lOGDF
-unix:INCLUDEPATH += $$PWD/../OGDF/
+unix:INCLUDEPATH += $$PWD/../OGDF/include
 
 
 # The following settings are compatible with OGDF being
@@ -154,6 +158,7 @@ win32:RC_FILE = images/myapp.rc
 
 macx:ICON = images/application.icns
 macx:QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
+
 
 RESOURCES += \
     images/images.qrc

@@ -376,6 +376,19 @@ std::vector<BlastHitPart> DeBruijnNode::getBlastHitPartsForThisNode(double scale
     return returnVector;
 }
 
+std::vector<BarcodePart> DeBruijnNode::getBarcodePartsForThisNode(double scaledNodeLength) const
+{
+    std::vector<BarcodePart> returnVector;
+
+    for (size_t i = 0; i < m_blastHits.size(); ++i)
+    {
+        std::vector<BarcodePart> hitParts = m_barcodes[i]->getBarcodeParts(false, scaledNodeLength);
+        returnVector.insert(returnVector.end(), hitParts.begin(), hitParts.end());
+    }
+
+    return returnVector;
+}
+
 std::vector<BlastHitPart> DeBruijnNode::getBlastHitPartsForThisNodeOrReverseComplement(double scaledNodeLength) const
 {
     const DeBruijnNode * positiveNode = this;

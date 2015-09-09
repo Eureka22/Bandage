@@ -27,6 +27,9 @@
 #include "../program/globals.h"
 #include "../ui/mygraphicsscene.h"
 #include "path.h"
+#include <QFileInfo>
+#include "barcode.h"
+
 
 class DeBruijnNode;
 class DeBruijnEdge;
@@ -39,6 +42,8 @@ public:
 
     QMap<QString, DeBruijnNode*> m_deBruijnGraphNodes;
     std::vector<DeBruijnEdge*> m_deBruijnGraphEdges;
+
+    QMap<QString, std::vector<Barcode* > > barocde_map;
 
     ogdf::Graph * m_ogdfGraph;
     ogdf::GraphAttributes * m_graphAttributes;
@@ -71,12 +76,14 @@ public:
     void buildDeBruijnGraphFromLastGraph(QString fullFileName);
     void buildDeBruijnGraphFromGfa(QString fullFileName);
     void buildDeBruijnGraphFromFastg(QString fullFileName);
+    void buildDeBruijnGraphFromFastgBC(QString fullFileName, QString barcodeFileName);
     void buildDeBruijnGraphFromTrinityFasta(QString fullFileName);
     void recalculateAllNodeWidths();
 
     GraphFileType getGraphFileTypeFromFile(QString fullFileName);
     bool checkFileIsLastGraph(QString fullFileName);
     bool checkFileIsFastG(QString fullFileName);
+    bool checkFileIsFastG_barcode(QString fullFileName);
     bool checkFileIsGfa(QString fullFileName);
     bool checkFileIsTrinityFasta(QString fullFileName);
     bool checkFirstLineOfFile(QString fullFileName, QString regExp);
@@ -106,6 +113,7 @@ public:
                               std::vector<QString> * sequences);
 
 
+
 private:
     double getValueUsingFractionalIndex(std::vector<double> * doubleVector, double index);
     QString convertNormalNumberStringToBandageNodeName(QString number);
@@ -119,6 +127,13 @@ private:
     int getLengthFromCigar(QString cigar);
     int getCigarCount(QString cigarCode, QString cigar);
     QString getOppositeNodeName(QString nodeName);
+    bool fileExists(QString path);
+
+
+
 };
+
+
+
 
 #endif // ASSEMBLYGRAPH_H

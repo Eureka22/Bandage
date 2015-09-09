@@ -1,0 +1,6 @@
+.o
+Bandage.pro.user
+.qmake*
+.DS_Store
+*.app
+Makefile
