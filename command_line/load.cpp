@@ -22,7 +22,7 @@
 int bandageLoad(QApplication * a, QStringList arguments)
 {
     QTextStream out(stdout);
-    QTextStream err(stdout);
+    QTextStream err(stderr);
 
     if (checkForHelp(arguments))
     {
@@ -47,7 +47,7 @@ int bandageLoad(QApplication * a, QStringList arguments)
 
     if (!checkIfFileExists(filename))
     {
-        err << "Bandage error: " << filename << " does not exist." << endl;
+        err << "Bandage error: " << filename << " does not exist" << endl;
         return 1;
     }
 
@@ -70,12 +70,15 @@ int bandageLoad(QApplication * a, QStringList arguments)
 void printLoadUsage(QTextStream * out, bool all)
 {
     *out << endl;
-    *out << "Usage:    Bandage load <graph>" << endl << endl;
+    *out << "Usage:    Bandage load <graph> [options]" << endl;
+    *out << endl;
     *out << "Options:  --draw              draw graph after loading" << endl;
     *out << endl;
     printCommonHelp(out);
     if (all)
         printSettingsUsage(out);
+    *out << "Online Bandage help: https://github.com/rrwick/Bandage/wiki" << endl;
+    *out << endl;
 }
 
 

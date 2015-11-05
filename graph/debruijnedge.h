@@ -38,6 +38,7 @@ public:
     DeBruijnEdge * getReverseComplement() const {return m_reverseComplement;}
     bool isDrawn() const {return m_drawn;}
     int getOverlap() const {return m_overlap;}
+    EdgeOverlapType getOverlapType() const {return m_overlapType;}
     DeBruijnNode * getOtherNode(DeBruijnNode * node) const;
     bool testExactOverlap(int overlap) const;
     void tracePaths(bool forward,
@@ -50,11 +51,17 @@ public:
                          DeBruijnNode * target,
                          std::vector<DeBruijnNode *> pathSoFar,
                          bool includeReverseComplement) const;
+    QByteArray getGfaLinkLine() const;
+    bool isPositiveEdge() const;
+    bool isNegativeEdge() const {return !isPositiveEdge();}
+    bool isOwnReverseComplement() const {return this == getReverseComplement();}
+    static bool compareEdgePointers(DeBruijnEdge * a, DeBruijnEdge * b);
 
     //MODIFERS
     void setGraphicsItemEdge(GraphicsItemEdge * gie) {m_graphicsItemEdge = gie;}
     void setReverseComplement(DeBruijnEdge * rc) {m_reverseComplement = rc;}
     void setOverlap(int ol) {m_overlap = ol;}
+    void setOverlapType(EdgeOverlapType olt) {m_overlapType = olt;}
     void reset() {m_graphicsItemEdge = 0; m_drawn = false;}
     void determineIfDrawn() {m_drawn = edgeIsVisible();}
     void setExactOverlap(int overlap) {m_overlap = overlap; m_overlapType = EXACT_OVERLAP;}

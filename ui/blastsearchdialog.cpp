@@ -49,6 +49,7 @@
 #include <QCheckBox>
 #include "querypathspushbutton.h"
 #include "querypathsdialog.h"
+#include "blasthitfiltersdialog.h"
 
 BlastSearchDialog::BlastSearchDialog(QWidget *parent, QString autoQuery) :
     QDialog(parent),
@@ -62,6 +63,8 @@ BlastSearchDialog::BlastSearchDialog(QWidget *parent, QString autoQuery) :
     ui->blastHitsTableWidget->m_smallFirstColumn = true;
     ui->blastQueriesTableWidget->m_smallFirstColumn = true;
     ui->blastQueriesTableWidget->m_smallSecondColumn = true;
+
+    setFilterText();
 
     //Load any previous parameters the user might have entered when previously using this dialog.
     ui->parametersLineEdit->setText(g_settings->blastSearchParameters);
@@ -80,7 +83,7 @@ BlastSearchDialog::BlastSearchDialog(QWidget *parent, QString autoQuery) :
 
     //Prepare the query and hits tables
     ui->blastHitsTableWidget->setHorizontalHeaderLabels(QStringList() << "" << "Query\nname" << "Node\nname" <<
-                                                        "Percent\nidentity" << "Alignment\nlength" << "Mis-\nmatches" <<
+                                                        "Percent\nidentity" << "Alignment\nlength" << "Query\ncover" << "Mis-\nmatches" <<
                                                         "Gap\nopens" << "Query\nstart" << "Query\nend" << "Node\nstart" <<
                                                         "Node\nend" <<"E-\nvalue" << "Bit\nscore");
     QFont font = ui->blastQueriesTableWidget->horizontalHeader()->font();
@@ -130,6 +133,7 @@ BlastSearchDialog::BlastSearchDialog(QWidget *parent, QString autoQuery) :
     connect(ui->runBlastSearchButton, SIGNAL(clicked()), this, SLOT(runBlastSearchesInThread()));
     connect(ui->blastQueriesTableWidget, SIGNAL(cellChanged(int,int)), this, SLOT(queryCellChanged(int,int)));
     connect(ui->blastQueriesTableWidget, SIGNAL(itemSelectionChanged()), this, SLOT(queryTableSelectionChanged()));
+    connect(ui->blastFiltersButton, SIGNAL(clicked(bool)), this, SLOT(openFiltersDialog()));
 }
 
 BlastSearchDialog::~BlastSearchDialog()
@@ -301,11 +305,15 @@ void BlastSearchDialog::fillHitsTable()
         QTableWidgetItem * nodeName = new QTableWidgetItem(hit->m_node->getName());
         nodeName->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
 
-        TableWidgetItemDouble * percentIdentity = new TableWidgetItemDouble(QString::number(hit->m_percentIdentity) + "%", hit->m_percentIdentity);
+        TableWidgetItemDouble * percentIdentity = new TableWidgetItemDouble(formatDoubleForDisplay(hit->m_percentIdentity, 2) + "%", hit->m_percentIdentity);
         percentIdentity->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
 
         TableWidgetItemInt * alignmentLength = new TableWidgetItemInt(formatIntForDisplay(hit->m_alignmentLength), hit->m_alignmentLength);
         alignmentLength->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+
+        double queryCoverPercent = 100.0 * hit->getQueryCoverageFraction();
+        TableWidgetItemDouble * queryCover = new TableWidgetItemDouble(formatDoubleForDisplay(queryCoverPercent, 2) + "%", queryCoverPercent);
+        queryCover->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
 
         TableWidgetItemInt * numberMismatches = new TableWidgetItemInt(formatIntForDisplay(hit->m_numberMismatches), hit->m_numberMismatches);
         numberMismatches->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
@@ -325,7 +333,7 @@ void BlastSearchDialog::fillHitsTable()
         TableWidgetItemInt * nodeEnd = new TableWidgetItemInt(formatIntForDisplay(hit->m_nodeEnd), hit->m_nodeEnd);
         nodeEnd->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
 
-        TableWidgetItemDouble * eValue = new TableWidgetItemDouble(QString::number(hit->m_eValue), hit->m_eValue);
+        TableWidgetItemDouble * eValue = new TableWidgetItemDouble(hit->m_eValue.asString(false), hit->m_eValue.toDouble());
         eValue->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
 
         TableWidgetItemDouble * bitScore = new TableWidgetItemDouble(QString::number(hit->m_bitScore), hit->m_bitScore);
@@ -336,14 +344,15 @@ void BlastSearchDialog::fillHitsTable()
         ui->blastHitsTableWidget->setItem(i, 2, nodeName);
         ui->blastHitsTableWidget->setItem(i, 3, percentIdentity);
         ui->blastHitsTableWidget->setItem(i, 4, alignmentLength);
-        ui->blastHitsTableWidget->setItem(i, 5, numberMismatches);
-        ui->blastHitsTableWidget->setItem(i, 6, numberGapOpens);
-        ui->blastHitsTableWidget->setItem(i, 7, queryStart);
-        ui->blastHitsTableWidget->setItem(i, 8, queryEnd);
-        ui->blastHitsTableWidget->setItem(i, 9, nodeStart);
-        ui->blastHitsTableWidget->setItem(i, 10, nodeEnd);
-        ui->blastHitsTableWidget->setItem(i, 11, eValue);
-        ui->blastHitsTableWidget->setItem(i, 12, bitScore);
+        ui->blastHitsTableWidget->setItem(i, 5, queryCover);
+        ui->blastHitsTableWidget->setItem(i, 6, numberMismatches);
+        ui->blastHitsTableWidget->setItem(i, 7, numberGapOpens);
+        ui->blastHitsTableWidget->setItem(i, 8, queryStart);
+        ui->blastHitsTableWidget->setItem(i, 9, queryEnd);
+        ui->blastHitsTableWidget->setItem(i, 10, nodeStart);
+        ui->blastHitsTableWidget->setItem(i, 11, nodeEnd);
+        ui->blastHitsTableWidget->setItem(i, 12, eValue);
+        ui->blastHitsTableWidget->setItem(i, 13, bitScore);
     }
 
     ui->blastHitsTableWidget->resizeColumns();
@@ -686,11 +695,11 @@ void BlastSearchDialog::setUiStep(BlastUiState blastUiState)
         ui->buildBlastDatabaseInfoText->setEnabled(true);
         ui->loadQueriesFromFastaInfoText->setEnabled(false);
         ui->enterQueryManuallyInfoText->setEnabled(false);
-        ui->parametersInfoText->setEnabled(false);
-        ui->startBlastSearchInfoText->setEnabled(false);
         ui->clearAllQueriesInfoText->setEnabled(false);
         ui->clearSelectedQueriesInfoText->setEnabled(false);
         ui->blastHitsTableWidget->setEnabled(false);
+        ui->blastSearchWidget->setEnabled(false);
+        ui->blastHitsTableInfoText->setEnabled(false);
         break;
 
     case BLAST_DB_BUILD_IN_PROGRESS:
@@ -714,11 +723,11 @@ void BlastSearchDialog::setUiStep(BlastUiState blastUiState)
         ui->buildBlastDatabaseInfoText->setEnabled(false);
         ui->loadQueriesFromFastaInfoText->setEnabled(false);
         ui->enterQueryManuallyInfoText->setEnabled(false);
-        ui->parametersInfoText->setEnabled(false);
-        ui->startBlastSearchInfoText->setEnabled(false);
         ui->clearAllQueriesInfoText->setEnabled(false);
         ui->clearSelectedQueriesInfoText->setEnabled(false);
         ui->blastHitsTableWidget->setEnabled(false);
+        ui->blastSearchWidget->setEnabled(false);
+        ui->blastHitsTableInfoText->setEnabled(false);
         break;
 
     case BLAST_DB_BUILT_BUT_NO_QUERIES:
@@ -742,11 +751,11 @@ void BlastSearchDialog::setUiStep(BlastUiState blastUiState)
         ui->buildBlastDatabaseInfoText->setEnabled(true);
         ui->loadQueriesFromFastaInfoText->setEnabled(true);
         ui->enterQueryManuallyInfoText->setEnabled(true);
-        ui->parametersInfoText->setEnabled(false);
-        ui->startBlastSearchInfoText->setEnabled(false);
         ui->clearSelectedQueriesInfoText->setEnabled(false);
         ui->clearSelectedQueriesInfoText->setEnabled(false);
         ui->blastHitsTableWidget->setEnabled(false);
+        ui->blastSearchWidget->setEnabled(false);
+        ui->blastHitsTableInfoText->setEnabled(false);
         break;
 
     case READY_FOR_BLAST_SEARCH:
@@ -770,11 +779,11 @@ void BlastSearchDialog::setUiStep(BlastUiState blastUiState)
         ui->buildBlastDatabaseInfoText->setEnabled(true);
         ui->loadQueriesFromFastaInfoText->setEnabled(true);
         ui->enterQueryManuallyInfoText->setEnabled(true);
-        ui->parametersInfoText->setEnabled(true);
-        ui->startBlastSearchInfoText->setEnabled(true);
         ui->clearAllQueriesInfoText->setEnabled(true);
         ui->clearSelectedQueriesInfoText->setEnabled(true);
         ui->blastHitsTableWidget->setEnabled(false);
+        ui->blastSearchWidget->setEnabled(true);
+        ui->blastHitsTableInfoText->setEnabled(false);
         break;
 
     case BLAST_SEARCH_IN_PROGRESS:
@@ -798,11 +807,11 @@ void BlastSearchDialog::setUiStep(BlastUiState blastUiState)
         ui->buildBlastDatabaseInfoText->setEnabled(true);
         ui->loadQueriesFromFastaInfoText->setEnabled(true);
         ui->enterQueryManuallyInfoText->setEnabled(true);
-        ui->parametersInfoText->setEnabled(true);
-        ui->startBlastSearchInfoText->setEnabled(true);
         ui->clearAllQueriesInfoText->setEnabled(true);
         ui->clearSelectedQueriesInfoText->setEnabled(true);
         ui->blastHitsTableWidget->setEnabled(false);
+        ui->blastSearchWidget->setEnabled(true);
+        ui->blastHitsTableInfoText->setEnabled(false);
         break;
 
     case BLAST_SEARCH_COMPLETE:
@@ -826,11 +835,11 @@ void BlastSearchDialog::setUiStep(BlastUiState blastUiState)
         ui->buildBlastDatabaseInfoText->setEnabled(true);
         ui->loadQueriesFromFastaInfoText->setEnabled(true);
         ui->enterQueryManuallyInfoText->setEnabled(true);
-        ui->parametersInfoText->setEnabled(true);
-        ui->startBlastSearchInfoText->setEnabled(true);
         ui->clearAllQueriesInfoText->setEnabled(true);
         ui->clearSelectedQueriesInfoText->setEnabled(true);
         ui->blastHitsTableWidget->setEnabled(true);
+        ui->blastSearchWidget->setEnabled(true);
+        ui->blastHitsTableInfoText->setEnabled(true);
         break;
     }
 }
@@ -848,12 +857,16 @@ void BlastSearchDialog::setInfoTexts()
                                                 "preparing them for a BLAST search.<br><br>"
                                                 "The database files generated are temporary and will "
                                                 "be deleted when Bandage is closed.");
+
     ui->loadQueriesFromFastaInfoText->setInfoText("Click this button to load a FASTA file. Each "
                                                   "sequence in the FASTA file will be a separate "
                                                   "query.");
+
     ui->enterQueryManuallyInfoText->setInfoText("Click this button to type or paste a single query sequence.");
+
     ui->parametersInfoText->setInfoText("You may add additional blastn/tblastn parameters here, exactly as they "
                                         "would be typed at the command line.");
+
     ui->startBlastSearchInfoText->setInfoText("Click this to conduct search for the above "
                                               "queries on the graph nodes.<br><br>"
                                               "If no parameters were added above, this will run:<br>"
@@ -862,8 +875,11 @@ void BlastSearchDialog::setInfoTexts()
                                               "parameters field, then this will run:<br>"
                                               "blastn -query queries.fasta -db all_nodes.fasta -outfmt 6 -evalue 0.01<br><br>"
                                               "For protein queries, tblastn will be used instead of blastn.");
+
     ui->clearSelectedQueriesInfoText->setInfoText("Click this button to remove any selected queries in the below list.");
+
     ui->clearAllQueriesInfoText->setInfoText("Click this button to remove all queries in the below list.");
+
     ui->blastQueriesTableInfoText->setInfoText("The BLAST queries are displayed in this table. Before a BLAST search "
                                                "is run, some information about the queries is not yet available and "
                                                "will show a dash.<br><br>"
@@ -883,13 +899,39 @@ void BlastSearchDialog::setInfoTexts()
                                                "<b>Length</b>: This is the length of the query, in bases (for nucleotide queries) "
                                                "or amino acids (for protein queries).<br><br>"
                                                "<b>Hits</b>: This is the number of BLAST hits acquired for the query.<br><br>"
-                                               "<b>Percent found</b>: This is the total fraction of the query captured by all of "
+                                               "<b>Query cover</b>: This is the total fraction of the query captured by all of "
                                                "the BLAST hits. However, the hits may not be proximal to each other. For "
                                                "example, if the first half a query was found in one part of the graph and "
-                                               "the second half in a different part, this value would be 100%.<br><br>"
+                                               "the second half in a different part, this value would be 100%. This value "
+                                               "is equivalent to the 'qcovs' output option in BLAST.<br><br>"
                                                "<b>Paths</b>: These are the number of possible paths through the graph which "
                                                "represent the entire query.  If there is at least one path, you can click on "
                                                "this button to view a table of the paths' properties.");
+
+    ui->blastHitsTableInfoText->setInfoText("The BLAST hits are displayed in this table after a BLAST search is run.<br><br>"
+                                            "<b>Query name</b>: This is the name of the BLAST query for the hit.<br><br>"
+                                            "<b>Node name</b>: This is the name of the graph node that the query matched.<br><br>"
+                                            "<b>Percent identity</b>: This is the sequence similarity over the length of the hit. "
+                                            "100% identity means that the query and node are identical over the length of the hit.<br><br>"
+                                            "<b>Alignment length</b>: This is the length of the alignment as measured against the "
+                                            "node. It is equal to node end minus node start plus one.<br><br>"
+                                            "<b>Query cover</b>: This is the fraction of the query covered by the hit. It is "
+                                            "equivalent to the 'qcovhsp' output option in BLAST.<br><br>"
+                                            "<b>Mismatches</b>: This is the number of locations (bases for nucleotide sequence, "
+                                            "amino acids for protein sequences) where the query and node sequences differ.<br><br>"
+                                            "<b>Gap opens</b>: This is the number of gaps in the alignment due to either insertions "
+                                            "or deletions.<br><br>"
+                                            "<b>Query start</b>: This is the position where the alignment starts relative to the query.<br><br>"
+                                            "<b>Query end</b>: This is the position where the alignment ends relative to the query.<br><br>"
+                                            "<b>Node start</b>: This is the position where the alignment starts relative to the node sequence.<br><br>"
+                                            "<b>Node end</b>: This is the position where the alignment ends relative to the node sequence.<br><br>"
+                                            "<b>E-value</b>: This is the BLAST-calculated expect value.<br><br>"
+                                            "<b>Bit score</b>: This is the BLAST-calculated bit score.");
+
+    ui->blastHitFiltersInfoText->setInfoText("Click the 'Set filters' button to open a dialog where you can set one or more BLAST hit "
+                                             "filters.<br><br>"
+                                             "These let you exclude BLAST hits using a threshold for alignment length, query coverage, "
+                                             "identity, e-value or bit score.");
 }
 
 
@@ -987,4 +1029,22 @@ void BlastSearchDialog::deleteQueryPathsDialog()
 void BlastSearchDialog::queryPathSelectionChangedSlot()
 {
     emit queryPathSelectionChanged();
+}
+
+
+void BlastSearchDialog::openFiltersDialog()
+{
+    BlastHitFiltersDialog filtersDialog(this);
+    filtersDialog.setWidgetsFromSettings();
+
+    if (filtersDialog.exec()) //The user clicked OK
+    {
+        filtersDialog.setSettingsFromWidgets();
+        setFilterText();
+    }
+}
+
+void BlastSearchDialog::setFilterText()
+{
+    ui->blastHitFiltersLabel->setText("Current filters: " + BlastHitFiltersDialog::getFilterText());
 }

@@ -35,6 +35,7 @@
 class GraphicsViewZoom;
 class MyGraphicsScene;
 class DeBruijnNode;
+class DeBruijnEdge;
 class BlastSearchDialog;
 
 namespace Ui {
@@ -75,7 +76,8 @@ private:
     void setZoomSpinBoxStep();
     void fillBarcodeTable();
     void removeAllGraphicsEdgesFromNode(DeBruijnNode * node);
-    void getSelectedNodeInfo(int & selectedNodeCount, QString & selectedNodeCountText, QString & selectedNodeListText, QString & selectedNodeLengthText);
+
+    void getSelectedNodeInfo(int & selectedNodeCount, QString & selectedNodeCountText, QString & selectedNodeListText, QString & selectedNodeLengthText, QString &selectedNodeDepthText);
     QString getSelectedEdgeListText();
     std::vector<DeBruijnNode *> getNodesFromLineEdit(QLineEdit * lineEdit, bool exactMatch, std::vector<QString> * nodesNotInGraph = 0);
     void setSceneRectangle();
@@ -92,9 +94,17 @@ private:
     QString convertGraphFileTypeToString(GraphFileType graphFileType);
     void setSelectedNodesWidgetsVisibility(bool visible);
     void setSelectedEdgesWidgetsVisibility(bool visible);
+    void setStartingNodesWidgetVisibility(bool visible);
+    void setNodeDistanceWidgetVisibility(bool visible);
+    void setReadDepthRangeWidgetVisibility(bool visible);
+    static QByteArray makeStringUrlSafe(QByteArray s);
+    void removeGraphicsItemNodes(const std::vector<DeBruijnNode *> * nodes, bool reverseComplement);
+    void removeGraphicsItemEdges(const std::vector<DeBruijnEdge *> * edges, bool reverseComplement);
+    void removeAllGraphicsEdgesFromNode(DeBruijnNode * node, bool reverseComplement);
 
 private slots:
     void loadGraph(QString fullFileName = "");
+    void loadCSV(QString fullFileNAme = "");
     void selectionChanged();
     void graphScopeChanged();
     void drawGraph();
@@ -114,7 +124,7 @@ private slots:
     void fontButtonPressed();
     void setNodeCustomColour();
     void setNodeCustomLabel();
-    void removeNodes();
+    void hideNodes();
     void openSettingsDialog();
     void openAboutDialog();
     void selectUserSpecifiedNodes();
@@ -136,12 +146,25 @@ private slots:
     void selectNotContiguous();
     void openBandageUrl();
     void nodeDistanceChanged();
+    void readDepthRangeChanged();
     void afterMainWindowShow();
     void startingNodesExactMatchChanged();
     void openPathSpecifyDialog();
     void nodeWidthChanged();
     void refreshDisplay();
     void setBarcodeSelectionNode(const QItemSelection &, const QItemSelection &);
+    void saveEntireGraphToFasta();
+    void saveEntireGraphToFastaOnlyPositiveNodes();
+    void saveEntireGraphToGfa();
+    void saveVisibleGraphToGfa();
+    void webBlastSelectedNodes();
+    void removeSelection();
+    void duplicateSelectedNodes();
+    void mergeSelectedNodes();
+    void mergeAllPossible();
+    void cleanUpAllBlast();
+    void changeNodeName();
+    void changeNodeReadDepth();
 
 protected:
       void showEvent(QShowEvent *ev);

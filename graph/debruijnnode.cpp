@@ -40,7 +40,8 @@ DeBruijnNode::DeBruijnNode(QString name, double readDepth, QByteArray sequence) 
     m_specialNode(false),
     m_drawn(false),
     m_highestDistanceInNeighbourSearch(0),
-    m_customColour(QColor(190, 190, 190))
+    m_customColour(QColor(190, 190, 190)),
+    m_csvData()
 {
 }
 
@@ -59,6 +60,13 @@ void DeBruijnNode::addEdge(DeBruijnEdge * edge)
 {
     if (std::find(m_edges.begin(), m_edges.end(), edge) == m_edges.end())
         m_edges.push_back(edge);
+}
+
+
+//This function deletes an edge from the node, if it exists.
+void DeBruijnNode::removeEdge(DeBruijnEdge * edge)
+{
+    m_edges.erase(std::remove(m_edges.begin(), m_edges.end(), edge), m_edges.end());
 }
 
 
@@ -303,28 +311,150 @@ QByteArray DeBruijnNode::getFasta() const
 {
     QByteArray fasta = ">";
 
-    fasta += "NODE_";
-    fasta += m_name;
-    fasta += "_length_";
-    fasta += QString::number(getLength());
-    fasta += "_cov_";
-    fasta += QString::number(getReadDepth());
+    fasta += getNodeNameForFasta();
     fasta += "\n";
 
-    int charactersOnLine = 0;
-    for (int i = 0; i < m_sequence.length(); ++i)
+    int charactersRemaining = m_sequence.length();
+    int currentIndex = 0;
+    while (charactersRemaining > 70)
     {
-        fasta += m_sequence.at(i);
-        ++charactersOnLine;
-        if (charactersOnLine >= 70)
-        {
-            fasta += "\n";
-            charactersOnLine = 0;
-        }
+        fasta += m_sequence.mid(currentIndex, 70);
+        fasta += "\n";
+        charactersRemaining -= 70;
+        currentIndex += 70;
     }
+    fasta += m_sequence.mid(currentIndex);
     fasta += "\n";
 
     return fasta;
+}
+
+
+QByteArray DeBruijnNode::getFastaNoNewLinesInSequence() const
+{
+    QByteArray fasta = ">";
+
+    fasta += getNodeNameForFasta();
+    fasta += "\n";
+    fasta += getSequence();
+    fasta += "\n";
+
+    return fasta;
+}
+
+
+QByteArray DeBruijnNode::getGfaSegmentLine() const
+{
+    QByteArray gfaSegmentLine = "S\t";
+    gfaSegmentLine += getNameWithoutSign() + "\t";
+    gfaSegmentLine += getFullSequence() + "\t";
+    gfaSegmentLine += "LN:i:" + QString::number(getFullLength()) + "\t";
+    gfaSegmentLine += "RC:i:" + QString::number(int(getReadDepth() * getLength() + 0.5));
+
+    gfaSegmentLine += "\n";
+    return gfaSegmentLine;
+}
+
+
+//This function gets the node's sequence.  The full parameter only has an effect
+//for Velvet LastGraph files where the sequences are shifted from their reverse
+//complement.  If full is true and the graph is from Velvet, this function will
+//extend the sequence using either the reverse complement or upstream nodes.
+QByteArray DeBruijnNode::getFullSequence() const
+{
+    if (g_assemblyGraph->m_graphFileType != LAST_GRAPH)
+        return getSequence();
+
+    //If the code got here, then we are getting a full sequence from a Velvet
+    //LastGraph graph, so we need to extend the beginning of the sequence.
+    int extensionLength = g_assemblyGraph->m_kmer - 1;
+
+    //If the node is at least k-1 in length, then the necessary sequence can be
+    //deduced from the reverse complement node.
+    if (getLength() >= extensionLength)
+    {
+        QByteArray revCompSeq = getReverseComplement()->getSequence();
+        QByteArray endOfRevCompSeq = revCompSeq.right(extensionLength);
+        QByteArray extension = AssemblyGraph::getReverseComplement(endOfRevCompSeq);
+        return extension + getSequence();
+    }
+
+    //If the node is not long enough, then we must look in upstream nodes for
+    //the rest of the sequence.
+    else
+    {
+        QByteArray extension = getUpstreamSequence(extensionLength);
+        if (extension.length() < extensionLength)
+        {
+            int additionalBases = extensionLength - extension.length();
+            QByteArray n;
+            n.fill('N', additionalBases);
+            extension = n + extension;
+        }
+        return extension + getSequence();
+    }
+}
+
+
+QByteArray DeBruijnNode::getUpstreamSequence(int upstreamSequenceLength) const
+{
+    std::vector<DeBruijnNode*> upstreamNodes = getUpstreamNodes();
+
+    QByteArray bestUpstreamNodeSequence;
+
+    for (size_t i = 0; i < upstreamNodes.size(); ++i)
+    {
+        DeBruijnNode * upstreamNode = upstreamNodes[i];
+        QByteArray upstreamNodeFullSequence = upstreamNode->getSequence();
+        QByteArray upstreamNodeSequence;
+
+        //If the upstream node has enough sequence, great!
+        if (upstreamNodeFullSequence.length() >= upstreamSequenceLength)
+            upstreamNodeSequence = upstreamNodeFullSequence.right(upstreamSequenceLength);
+
+        //If the upstream node does not have enough sequence, then we need to
+        //look even further upstream.
+        else
+            upstreamNodeSequence = upstreamNode->getUpstreamSequence(upstreamSequenceLength - upstreamNodeFullSequence.length()) + upstreamNodeFullSequence;
+
+        //If we now have enough sequence, then we can return it.
+        if (upstreamNodeSequence.length() == upstreamSequenceLength)
+            return upstreamNodeSequence;
+
+        //If we don't have enough sequence, then we need to try the next
+        //upstream node.  If our current one is the best so far, save that in
+        //case no complete sequence is found.
+        if (upstreamNodeSequence.length() > bestUpstreamNodeSequence.length())
+            bestUpstreamNodeSequence = upstreamNodeSequence;
+    }
+
+    //If the code got here, that means that not enough upstream sequence was
+    //found in any path!  Return what we have managed to get so far.
+    return bestUpstreamNodeSequence;
+}
+
+
+int DeBruijnNode::getFullLength() const
+{
+    if (g_assemblyGraph->m_graphFileType != LAST_GRAPH)
+        return getLength();
+    else
+        return getLength() + g_assemblyGraph->m_kmer - 1;
+}
+
+
+QString DeBruijnNode::getNodeNameForFasta() const
+{
+    QString nodeNameForFasta;
+
+    nodeNameForFasta += "NODE_";
+    nodeNameForFasta += m_name;
+    nodeNameForFasta += "_length_";
+    nodeNameForFasta += QByteArray::number(getLength());
+    nodeNameForFasta += "_cov_";
+    nodeNameForFasta += QByteArray::number(getReadDepth());
+
+    return nodeNameForFasta;
 }
 
 
@@ -553,4 +683,11 @@ int DeBruijnNode::getBasePairsPerSegment() const
         return g_settings->autoBasePairsPerSegment;
     else
         return g_settings->manualBasePairsPerSegment;
+}
+
+
+
+bool DeBruijnNode::isInReadDepthRange(double min, double max) const
+{
+    return m_readDepth >= min && m_readDepth <= max;
 }

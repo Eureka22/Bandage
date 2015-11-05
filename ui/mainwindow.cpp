@@ -66,6 +66,8 @@
 #include <QDebug>
 #include "program/globals.h"
 #include "graph/barcodesetting.h"
+#include "changenodenamedialog.h"
+#include "changenodereaddepthdialog.h"
 
 MainWindow::MainWindow(QString fileToLoadOnStartup, bool drawGraphAfterLoad) :
     QMainWindow(0),
@@ -122,8 +124,15 @@ MainWindow::MainWindow(QString fileToLoadOnStartup, bool drawGraphAfterLoad) :
     graphScopeChanged();
     switchColourScheme();
 
+    //If this is a Mac, change the 'Delete' shortcuts to 'Backspace' instead.
+#ifdef Q_OS_MAC
+    ui->actionHide_selected_nodes->setShortcut(Qt::Key_Backspace);
+    ui->actionRemove_selection_from_graph->setShortcut(Qt::SHIFT + Qt::Key_Backspace);
+#endif
+
     connect(ui->drawGraphButton, SIGNAL(clicked()), this, SLOT(drawGraph()));
     connect(ui->actionLoad_graph, SIGNAL(triggered()), this, SLOT(loadGraph()));
+    connect(ui->actionLoad_CSV, SIGNAL(triggered(bool)), this, SLOT(loadCSV()));
     connect(ui->actionExit, SIGNAL(triggered()), this, SLOT(close()));
     connect(ui->graphScopeComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(graphScopeChanged()));
     connect(ui->zoomSpinBox, SIGNAL(valueChanged(double)), this, SLOT(zoomSpinBoxChanged()));
@@ -139,12 +148,13 @@ MainWindow::MainWindow(QString fileToLoadOnStartup, bool drawGraphAfterLoad) :
     connect(ui->nodeNamesCheckBox, SIGNAL(toggled(bool)), this, SLOT(setTextDisplaySettings()));
     connect(ui->nodeLengthsCheckBox, SIGNAL(toggled(bool)), this, SLOT(setTextDisplaySettings()));
     connect(ui->nodeReadDepthCheckBox, SIGNAL(toggled(bool)), this, SLOT(setTextDisplaySettings()));
+    connect(ui->csvCheckBox, SIGNAL(toggled(bool)), this, SLOT(setTextDisplaySettings()));
+    connect(ui->csvComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setTextDisplaySettings()));
     connect(ui->blastHitsCheckBox, SIGNAL(toggled(bool)), this, SLOT(setTextDisplaySettings()));
     connect(ui->textOutlineCheckBox, SIGNAL(toggled(bool)), this, SLOT(setTextDisplaySettings()));
     connect(ui->fontButton, SIGNAL(clicked()), this, SLOT(fontButtonPressed()));
     connect(ui->setNodeCustomColourButton, SIGNAL(clicked()), this, SLOT(setNodeCustomColour()));
     connect(ui->setNodeCustomLabelButton, SIGNAL(clicked()), this, SLOT(setNodeCustomLabel()));
-    connect(ui->removeNodeButton, SIGNAL(clicked()), this, SLOT(removeNodes()));
     connect(ui->actionSettings, SIGNAL(triggered()), this, SLOT(openSettingsDialog()));
     connect(ui->selectNodesButton, SIGNAL(clicked()), this, SLOT(selectUserSpecifiedNodes()));
     connect(ui->selectionSearchNodesLineEdit, SIGNAL(returnPressed()), this, SLOT(selectUserSpecifiedNodes()));
@@ -167,33 +177,30 @@ MainWindow::MainWindow(QString fileToLoadOnStartup, bool drawGraphAfterLoad) :
     connect(ui->actionSelect_contiguous_nodes, SIGNAL(triggered()), this, SLOT(selectContiguous()));
     connect(ui->actionSelect_possibly_contiguous_nodes, SIGNAL(triggered()), this, SLOT(selectMaybeContiguous()));
     connect(ui->actionSelect_not_contiguous_nodes, SIGNAL(triggered()), this, SLOT(selectNotContiguous()));
-    connect(ui->actionBandage_website, SIGNAL(triggered()), this, SLOT(openBandageUrl()));
+    connect(ui->actionBandage_online_help, SIGNAL(triggered()), this, SLOT(openBandageUrl()));
     connect(ui->nodeDistanceSpinBox, SIGNAL(valueChanged(int)), this, SLOT(nodeDistanceChanged()));
+    connect(ui->minReadDepthSpinBox, SIGNAL(valueChanged(double)), this, SLOT(readDepthRangeChanged()));
+    connect(ui->maxReadDepthSpinBox, SIGNAL(valueChanged(double)), this, SLOT(readDepthRangeChanged()));
     connect(ui->startingNodesExactMatchRadioButton, SIGNAL(toggled(bool)), this, SLOT(startingNodesExactMatchChanged()));
     connect(ui->actionSpecify_exact_path_for_copy_save, SIGNAL(triggered()), this, SLOT(openPathSpecifyDialog()));
     connect(ui->nodeWidthSpinBox, SIGNAL(valueChanged(double)), this, SLOT(nodeWidthChanged()));
     connect(g_graphicsView, SIGNAL(copySelectedSequencesToClipboard()), this, SLOT(copySelectedSequencesToClipboard()));
     connect(g_graphicsView, SIGNAL(saveSelectedSequencesToFile()), this, SLOT(saveSelectedSequencesToFile()));
     connect(ui->barcodeTable->selectionModel(), SIGNAL(selectionChanged(const QItemSelection &, const QItemSelection &)), SLOT(setBarcodeSelectionNode(const QItemSelection &, const QItemSelection &)));
+    connect(ui->actionSave_entire_graph_to_FASTA, SIGNAL(triggered(bool)), this, SLOT(saveEntireGraphToFasta()));
+    connect(ui->actionSave_entire_graph_to_FASTA_only_positive_nodes, SIGNAL(triggered(bool)), this, SLOT(saveEntireGraphToFastaOnlyPositiveNodes()));
+    connect(ui->actionSave_entire_graph_to_GFA, SIGNAL(triggered(bool)), this, SLOT(saveEntireGraphToGfa()));
+    connect(ui->actionSave_visible_graph_to_GFA, SIGNAL(triggered(bool)), this, SLOT(saveVisibleGraphToGfa()));
+    connect(ui->actionWeb_BLAST_selected_nodes, SIGNAL(triggered(bool)), this, SLOT(webBlastSelectedNodes()));
+    connect(ui->actionHide_selected_nodes, SIGNAL(triggered(bool)), this, SLOT(hideNodes()));
+    connect(ui->actionRemove_selection_from_graph, SIGNAL(triggered(bool)), this, SLOT(removeSelection()));
+    connect(ui->actionDuplicate_selected_nodes, SIGNAL(triggered(bool)), this, SLOT(duplicateSelectedNodes()));
+    connect(ui->actionMerge_selected_nodes, SIGNAL(triggered(bool)), this, SLOT(mergeSelectedNodes()));
+    connect(ui->actionMerge_all_possible_nodes, SIGNAL(triggered(bool)), this, SLOT(mergeAllPossible()));
+    connect(ui->actionChange_node_name, SIGNAL(triggered(bool)), this, SLOT(changeNodeName()));
+    connect(ui->actionChange_node_read_depth, SIGNAL(triggered(bool)), this, SLOT(changeNodeReadDepth()));
 
     connect(this, SIGNAL(windowLoaded()), this, SLOT(afterMainWindowShow()), Qt::ConnectionType(Qt::QueuedConnection | Qt::UniqueConnection));
-
-    QShortcut *colourShortcut = new QShortcut(QKeySequence("Ctrl+O"), this);
-    connect(colourShortcut, SIGNAL(activated()), this, SLOT(setNodeCustomColour()));
-    QShortcut *labelShortcut = new QShortcut(QKeySequence("Ctrl+L"), this);
-    connect(labelShortcut, SIGNAL(activated()), this, SLOT(setNodeCustomLabel()));
-    QShortcut *removeShortcut1 = new QShortcut(QKeySequence("Backspace"), this);
-    connect(removeShortcut1, SIGNAL(activated()), this, SLOT(removeNodes()));
-    QShortcut *removeShortcut2 = new QShortcut(QKeySequence("Delete"), this);
-    connect(removeShortcut2, SIGNAL(activated()), this, SLOT(removeNodes()));
-
-    //On the Mac, the shortcut keys will be using the command button, not the control button
-    //so change the tooltips to reflect this.
-#ifdef Q_OS_MAC
-    QString command(QChar(0x2318));
-    ui->setNodeCustomColourButton->setToolTip(command + 'O');
-    ui->setNodeCustomLabelButton->setToolTip(command + 'L');
-#endif
 }
 
 
@@ -255,6 +262,50 @@ void MainWindow::cleanUp()
     {
         delete m_blastSearchDialog;
         m_blastSearchDialog = 0;
+    }
+
+    ui->csvComboBox->clear();
+    ui->csvComboBox->setEnabled(false);
+    g_settings->displayNodeCsvDataCol = 0;
+}
+
+void MainWindow::loadCSV(QString fullFileName)
+{
+    QString selectedFilter = "Comma separated value (*.csv)";
+    if (fullFileName == "")
+    {
+        fullFileName = QFileDialog::getOpenFileName(this, "Load CSV", g_memory->rememberedPath,
+                                                    "Comma separated value (*.csv)",
+                                                    &selectedFilter);
+    }
+
+    if (fullFileName == "")
+        return; // user clicked on cancel
+
+    QString errormsg;
+    QStringList columns;
+
+    try
+    {
+        MyProgressDialog progress(this, "Loading CSV...", false);
+        progress.setWindowModality(Qt::WindowModal);
+        progress.show();
+
+        g_assemblyGraph->loadCSV(fullFileName, &columns, &errormsg);
+
+        ui->csvComboBox->setEnabled(true);
+        ui->csvComboBox->clear();
+        ui->csvComboBox->addItems(columns);
+        g_settings->displayNodeCsvDataCol = 0;
+    }
+
+    catch (...)
+    {
+        QString errorTitle = "Error loading CSV";
+        QString errorMessage = "There was an error when attempting to load:\n"
+                               + fullFileName + "\n\n"
+                               "Please verify that this file has the correct format.";
+        QMessageBox::warning(this, errorTitle, errorMessage);
     }
 }
 
@@ -397,20 +448,21 @@ void MainWindow::selectionChanged()
         QString selectedNodeCountText;
         QString selectedNodeListText;
         QString selectedNodeLengthText;
+        QString selectedNodeDepthText;
 
-        getSelectedNodeInfo(selectedNodeCount, selectedNodeCountText, selectedNodeListText, selectedNodeLengthText);
+        getSelectedNodeInfo(selectedNodeCount, selectedNodeCountText, selectedNodeListText, selectedNodeLengthText, selectedNodeDepthText);
 
         if (selectedNodeCount == 1)
         {
             ui->selectedNodesTitleLabel->setText("Selected node");
-            ui->removeNodeButton->setText("Remove node");
             ui->selectedNodesLengthLabel->setText("Length: " + selectedNodeLengthText);
+            ui->selectedNodesDepthLabel->setText("Read depth: " + selectedNodeDepthText);
         }
         else
         {
             ui->selectedNodesTitleLabel->setText("Selected nodes (" + selectedNodeCountText + ")");
-            ui->removeNodeButton->setText("Remove nodes");
             ui->selectedNodesLengthLabel->setText("Total length: " + selectedNodeLengthText);
+            ui->selectedNodesDepthLabel->setText("Mean read depth: " + selectedNodeDepthText);
         }
 
         ui->selectedNodesTextEdit->setPlainText(selectedNodeListText);
@@ -433,11 +485,10 @@ void MainWindow::selectionChanged()
 
         ui->selectedEdgesTextEdit->setPlainText(getSelectedEdgeListText());
     }
-
 }
 
 
-void MainWindow::getSelectedNodeInfo(int & selectedNodeCount, QString & selectedNodeCountText, QString & selectedNodeListText, QString & selectedNodeLengthText)
+void MainWindow::getSelectedNodeInfo(int & selectedNodeCount, QString & selectedNodeCountText, QString & selectedNodeListText, QString & selectedNodeLengthText, QString & selectedNodeDepthText)
 {
     std::vector<DeBruijnNode *> selectedNodes = m_scene->getSelectedNodes();
 
@@ -462,54 +513,17 @@ void MainWindow::getSelectedNodeInfo(int & selectedNodeCount, QString & selected
     }
 
     selectedNodeLengthText = formatIntForDisplay(totalLength);
+    selectedNodeDepthText = formatDoubleForDisplay(g_assemblyGraph->getMeanReadDepth(selectedNodes), 1);
 }
 
 
 
-bool compareEdgePointers(DeBruijnEdge * a, DeBruijnEdge * b)
-{
-    QString aStart = a->getStartingNode()->getName();
-    QString bStart = b->getStartingNode()->getName();
-    QString aStartNoSign = aStart;
-    aStartNoSign.chop(1);
-    QString bStartNoSign = bStart;
-    bStartNoSign.chop(1);
-    bool ok1;
-    long long aStartNumber = aStartNoSign.toLongLong(&ok1);
-    bool ok2;
-    long long bStartNumber = bStartNoSign.toLongLong(&ok2);
-
-    QString aEnd = a->getEndingNode()->getName();
-    QString bEnd = b->getEndingNode()->getName();
-    QString aEndNoSign = aEnd;
-    aEndNoSign.chop(1);
-    QString bEndNoSign = bEnd;
-    bEndNoSign.chop(1);
-    bool ok3;
-    long long aEndNumber = aEndNoSign.toLongLong(&ok3);
-    bool ok4;
-    long long bEndNumber = bEndNoSign.toLongLong(&ok4);
-
-
-    //If the node names are essentially numbers, then sort them as numbers.
-    if (ok1 && ok2 && ok3 && ok4)
-    {
-        if (aStartNumber != bStartNumber)
-            return aStartNumber < bStartNumber;
-
-        if (aStartNumber == bStartNumber)
-            return aEndNumber < bEndNumber;
-    }
-
-    //If the node names are strings, then just sort them as strings.
-    return aStart < bStart;
-}
 
 QString MainWindow::getSelectedEdgeListText()
 {
     std::vector<DeBruijnEdge *> selectedEdges = m_scene->getSelectedEdges();
 
-    std::sort(selectedEdges.begin(), selectedEdges.end(), compareEdgePointers);
+    std::sort(selectedEdges.begin(), selectedEdges.end(), DeBruijnEdge::compareEdgePointers);
 
     QString edgeText;
     for (size_t i = 0; i < selectedEdges.size(); ++i)
@@ -537,18 +551,9 @@ void MainWindow::graphScopeChanged()
     case 0:
         g_settings->graphScope = WHOLE_GRAPH;
 
-        ui->startingNodesInfoText->setVisible(false);
-        ui->startingNodesLabel->setVisible(false);
-        ui->startingNodesLineEdit->setVisible(false);
-
-        ui->startingNodesMatchTypeInfoText->setVisible(false);
-        ui->startingNodesMatchTypeLabel->setVisible(false);
-        ui->startingNodesExactMatchRadioButton->setVisible(false);
-        ui->startingNodesPartialMatchRadioButton->setVisible(false);
-
-        ui->nodeDistanceInfoText->setVisible(false);
-        ui->nodeDistanceLabel->setVisible(false);
-        ui->nodeDistanceSpinBox->setVisible(false);
+        setStartingNodesWidgetVisibility(false);
+        setNodeDistanceWidgetVisibility(false);
+        setReadDepthRangeWidgetVisibility(false);
 
         ui->graphDrawingGridLayout->addWidget(ui->nodeStyleInfoText, 1, 0, 1, 1);
         ui->graphDrawingGridLayout->addWidget(ui->nodeStyleLabel, 1, 1, 1, 1);
@@ -561,18 +566,9 @@ void MainWindow::graphScopeChanged()
     case 1:
         g_settings->graphScope = AROUND_NODE;
 
-        ui->startingNodesInfoText->setVisible(true);
-        ui->startingNodesLabel->setVisible(true);
-        ui->startingNodesLineEdit->setVisible(true);
-
-        ui->startingNodesMatchTypeInfoText->setVisible(true);
-        ui->startingNodesMatchTypeLabel->setVisible(true);
-        ui->startingNodesExactMatchRadioButton->setVisible(true);
-        ui->startingNodesPartialMatchRadioButton->setVisible(true);
-
-        ui->nodeDistanceInfoText->setVisible(true);
-        ui->nodeDistanceLabel->setVisible(true);
-        ui->nodeDistanceSpinBox->setVisible(true);
+        setStartingNodesWidgetVisibility(true);
+        setNodeDistanceWidgetVisibility(true);
+        setReadDepthRangeWidgetVisibility(false);
 
         ui->nodeDistanceInfoText->setInfoText("Nodes will be drawn if they are specified in the above list or are "
                                               "within this many steps of those nodes.<br><br>"
@@ -600,18 +596,9 @@ void MainWindow::graphScopeChanged()
     case 2:
         g_settings->graphScope = AROUND_BLAST_HITS;
 
-        ui->startingNodesInfoText->setVisible(false);
-        ui->startingNodesLabel->setVisible(false);
-        ui->startingNodesLineEdit->setVisible(false);
-
-        ui->startingNodesMatchTypeInfoText->setVisible(false);
-        ui->startingNodesMatchTypeLabel->setVisible(false);
-        ui->startingNodesExactMatchRadioButton->setVisible(false);
-        ui->startingNodesPartialMatchRadioButton->setVisible(false);
-
-        ui->nodeDistanceInfoText->setVisible(true);
-        ui->nodeDistanceLabel->setVisible(true);
-        ui->nodeDistanceSpinBox->setVisible(true);
+        setStartingNodesWidgetVisibility(false);
+        setNodeDistanceWidgetVisibility(true);
+        setReadDepthRangeWidgetVisibility(false);
 
         ui->nodeDistanceInfoText->setInfoText("Nodes will be drawn if they contain a BLAST hit or are within this "
                                               "many steps of nodes with a BLAST hit.<br><br>"
@@ -629,9 +616,56 @@ void MainWindow::graphScopeChanged()
         ui->graphDrawingGridLayout->addWidget(ui->drawGraphButton, 3, 1, 1, 2);
 
         break;
+
+    case 3:
+        g_settings->graphScope = READ_DEPTH_RANGE;
+
+        setStartingNodesWidgetVisibility(false);
+        setNodeDistanceWidgetVisibility(false);
+        setReadDepthRangeWidgetVisibility(true);
+
+        ui->graphDrawingGridLayout->addWidget(ui->minReadDepthInfoText, 1, 0, 1, 1);
+        ui->graphDrawingGridLayout->addWidget(ui->minReadDepthLabel, 1, 1, 1, 1);
+        ui->graphDrawingGridLayout->addWidget(ui->minReadDepthSpinBox, 1, 2, 1, 1);
+        ui->graphDrawingGridLayout->addWidget(ui->maxReadDepthInfoText, 2, 0, 1, 1);
+        ui->graphDrawingGridLayout->addWidget(ui->maxReadDepthLabel, 2, 1, 1, 1);
+        ui->graphDrawingGridLayout->addWidget(ui->maxReadDepthSpinBox, 2, 2, 1, 1);
+        ui->graphDrawingGridLayout->addWidget(ui->nodeStyleInfoText, 3, 0, 1, 1);
+        ui->graphDrawingGridLayout->addWidget(ui->nodeStyleLabel, 3, 1, 1, 1);
+        ui->graphDrawingGridLayout->addWidget(ui->nodeStyleWidget, 3, 2, 1, 1);
+        ui->graphDrawingGridLayout->addWidget(ui->drawGraphInfoText, 4, 0, 1, 1);
+        ui->graphDrawingGridLayout->addWidget(ui->drawGraphButton, 4, 1, 1, 2);
+
+        break;
     }
 }
 
+
+void MainWindow::setStartingNodesWidgetVisibility(bool visible)
+{
+    ui->startingNodesInfoText->setVisible(visible);
+    ui->startingNodesLabel->setVisible(visible);
+    ui->startingNodesLineEdit->setVisible(visible);
+    ui->startingNodesMatchTypeInfoText->setVisible(visible);
+    ui->startingNodesMatchTypeLabel->setVisible(visible);
+    ui->startingNodesExactMatchRadioButton->setVisible(visible);
+    ui->startingNodesPartialMatchRadioButton->setVisible(visible);
+}
+void MainWindow::setNodeDistanceWidgetVisibility(bool visible)
+{
+    ui->nodeDistanceInfoText->setVisible(visible);
+    ui->nodeDistanceLabel->setVisible(visible);
+    ui->nodeDistanceSpinBox->setVisible(visible);
+}
+void MainWindow::setReadDepthRangeWidgetVisibility(bool visible)
+{
+    ui->minReadDepthInfoText->setVisible(visible);
+    ui->minReadDepthLabel->setVisible(visible);
+    ui->minReadDepthSpinBox->setVisible(visible);
+    ui->maxReadDepthInfoText->setVisible(visible);
+    ui->maxReadDepthLabel->setVisible(visible);
+    ui->maxReadDepthSpinBox->setVisible(visible);
+}
 
 
 void MainWindow::drawGraph()
@@ -694,9 +728,7 @@ void MainWindow::resetScene()
     connect(m_scene, SIGNAL(selectionChanged()), this, SLOT(selectionChanged()));
     selectionChanged();
 
-    //Undo the graphics view rotation
-    g_graphicsView->rotate(-g_graphicsView->m_rotation);
-    g_graphicsView->m_rotation = 0.0;
+    g_graphicsView->undoRotation();
 }
 
 
@@ -751,7 +783,7 @@ void MainWindow::zoomSpinBoxChanged()
     double zoomFactor = newValue / m_previousZoomSpinBoxValue;
     setZoomSpinBoxStep();
 
-    m_graphicsViewZoom->gentle_zoom(zoomFactor, SPIN_BOX);
+    m_graphicsViewZoom->gentleZoom(zoomFactor, SPIN_BOX);
 
     m_previousZoomSpinBoxValue = newValue;
 }
@@ -799,7 +831,7 @@ void MainWindow::zoomToFitRect(QRectF rect)
     if (g_absoluteZoom < g_settings->minZoom)
     {
         double newZoomFactor = g_settings->minZoom / g_absoluteZoom;
-        m_graphicsViewZoom->gentle_zoom(newZoomFactor, SPIN_BOX);
+        m_graphicsViewZoom->gentleZoom(newZoomFactor, SPIN_BOX);
         g_absoluteZoom *= newZoomFactor;
         g_absoluteZoom = g_settings->minZoom;
         newSpinBoxValue = g_settings->minZoom * 100.0;
@@ -807,7 +839,7 @@ void MainWindow::zoomToFitRect(QRectF rect)
     if (g_absoluteZoom > g_settings->maxZoom)
     {
         double newZoomFactor = g_settings->maxZoom / g_absoluteZoom;
-        m_graphicsViewZoom->gentle_zoom(newZoomFactor, SPIN_BOX);
+        m_graphicsViewZoom->gentleZoom(newZoomFactor, SPIN_BOX);
         g_absoluteZoom *= newZoomFactor;
         g_absoluteZoom = g_settings->maxZoom;
         newSpinBoxValue = g_settings->maxZoom * 100.0;
@@ -970,7 +1002,7 @@ void MainWindow::switchColourScheme()
         ui->contiguityInfoText->setVisible(false);
         break;
     case 1:
-        g_settings->nodeColourScheme = ONE_COLOUR;
+        g_settings->nodeColourScheme = UNIFORM_COLOURS;
         ui->contiguityButton->setVisible(false);
         ui->contiguityInfoText->setVisible(false);
         break;
@@ -1016,7 +1048,6 @@ void MainWindow::switchColourScheme()
 void MainWindow::determineContiguityFromSelectedNode()
 {
     g_assemblyGraph->resetNodeContiguityStatus();
-    g_assemblyGraph->resetAllNodeColours();
 
     std::vector<DeBruijnNode *> selectedNodes = m_scene->getSelectedNodes();
     if (selectedNodes.size() > 0)
@@ -1136,8 +1167,8 @@ void MainWindow::saveImageEntireScene()
         g_settings->positionTextNodeCentre = true;
 
         //Temporarily undo any rotation so labels appear upright.
-        double rotationBefore = g_graphicsView->m_rotation;
-        g_graphicsView->m_rotation = 0.0;
+        double rotationBefore = g_graphicsView->getRotation();
+        g_graphicsView->undoRotation();
 
         m_imageFilter = selectedFilter;
 
@@ -1197,7 +1228,7 @@ void MainWindow::saveImageEntireScene()
         }
 
         g_settings->positionTextNodeCentre = positionTextNodeCentreSettingBefore;
-        g_graphicsView->m_rotation = rotationBefore;
+        g_graphicsView->setRotation(rotationBefore);
     }
 }
 
@@ -1229,6 +1260,8 @@ void MainWindow::setTextDisplaySettings()
     g_settings->displayNodeLengths = ui->nodeLengthsCheckBox->isChecked();
     g_settings->displayNodeReadDepth = ui->nodeReadDepthCheckBox->isChecked();
     g_settings->displayBlastHits = ui->blastHitsCheckBox->isChecked();
+    g_settings->displayNodeCsvData = ui->csvCheckBox->isChecked();
+    g_settings->displayNodeCsvDataCol = ui->csvComboBox->currentIndex();
     g_settings->textOutline = ui->textOutlineCheckBox->isChecked();
 
     g_graphicsView->viewport()->update();
@@ -1299,45 +1332,6 @@ void MainWindow::setNodeCustomLabel()
 }
 
 
-void MainWindow::removeNodes()
-{
-    std::vector<DeBruijnNode *> selectedNodes = m_scene->getSelectedNodes();
-    if (selectedNodes.size() == 0)
-        return;
-
-    for (size_t i = 0; i < selectedNodes.size(); ++i)
-    {
-        //First remove any edges connected to this node
-        removeAllGraphicsEdgesFromNode(selectedNodes[i]);
-
-        //If the graph is on single mode, then also try to remove any
-        //edges connected to the reverse complement node
-        if (!g_settings->doubleMode)
-            removeAllGraphicsEdgesFromNode(selectedNodes[i]->getReverseComplement());
-
-        //Now remove the node itself
-        GraphicsItemNode * graphicsItemNode = selectedNodes[i]->getGraphicsItemNode();
-        m_scene->removeItem(graphicsItemNode);
-        delete graphicsItemNode;
-        selectedNodes[i]->setGraphicsItemNode(0);
-    }
-}
-
-void MainWindow::removeAllGraphicsEdgesFromNode(DeBruijnNode * node)
-{
-    const std::vector<DeBruijnEdge *> * edges = node->getEdgesPointer();
-    for (size_t i = 0; i < edges->size(); ++i)
-    {
-        DeBruijnEdge * deBruijnEdge = (*edges)[i];
-        GraphicsItemEdge * graphicsItemEdge = deBruijnEdge->getGraphicsItemEdge();
-        if (graphicsItemEdge != 0)
-        {
-            m_scene->removeItem(graphicsItemEdge);
-            delete graphicsItemEdge;
-            deBruijnEdge->setGraphicsItemEdge(0);
-        }
-    }
-}
 
 
 
@@ -1781,7 +1775,12 @@ void MainWindow::setInfoTexts()
                                         "'Custom' labels must be assigned by clicking the 'Set "
                                         "label' button when one or more nodes are selected.<br><br>"
                                         "When 'BLAST hits' labels are shown, they are displayed over any "
-                                        "BLAST hits present in the node.");
+                                        "BLAST hits present in the node.<br><br>"
+                                        "The 'CSV data' option allows you to import custom labels. To use this, "
+                                        "you must first load a CSV file (using the 'Load CSV label data' item in "
+                                        "the 'File' menu) which contains the node names in the first column and "
+                                        "custom labels in subsequent columns. The CSV file must also contain a "
+                                        "header row.");
     ui->nodeFontInfoText->setInfoText("Click the 'Font' button to choose the font used for node labels. The "
                                       "colour of the font is configurable in Bandage's " + settingsDialogTitle + ".<br><br>"
                                       "Ticking 'Text outline' will surround the text with a white outline. "
@@ -1804,11 +1803,10 @@ void MainWindow::setInfoTexts()
                                                "these buttons. They will only be visible when the colouring "
                                                "mode is set to 'Custom colours' and the 'Custom' label option "
                                                "is ticked.");
-    ui->removeNodesInfoText->setInfoText("Click this button to remove selected nodes from the drawn graph, along "
-                                         "with any edges that connect to those nodes. This makes no change to "
-                                         "the underlying assembly graph, just the visualisation.<br><br>"
-                                         "To see removed nodes again, you must redraw the graph by clicking "
-                                         "'Draw graph'.");
+    ui->minReadDepthInfoText->setInfoText("This is the lower bound for the read depth range. Nodes with a read "
+                                          "depth less than this value will not be drawn.");
+    ui->maxReadDepthInfoText->setInfoText("This is the uper bound for the read depth range. Nodes with a read "
+                                          "depth greater than this value will not be drawn.");
 }
 
 
@@ -1826,6 +1824,7 @@ void MainWindow::setUiState(UiState uiState)
         ui->nodeLabelsWidget->setEnabled(false);
         ui->blastSearchWidget->setEnabled(false);
         ui->selectionScrollAreaWidgetContents->setEnabled(false);
+        ui->actionLoad_CSV->setEnabled(false);
         break;
     case GRAPH_LOADED:
         ui->graphDetailsWidget->setEnabled(true);
@@ -1834,6 +1833,7 @@ void MainWindow::setUiState(UiState uiState)
         ui->nodeLabelsWidget->setEnabled(false);
         ui->blastSearchWidget->setEnabled(true);
         ui->selectionScrollAreaWidgetContents->setEnabled(false);
+        ui->actionLoad_CSV->setEnabled(true);
         break;
     case GRAPH_DRAWN:
         ui->graphDetailsWidget->setEnabled(true);
@@ -1842,6 +1842,8 @@ void MainWindow::setUiState(UiState uiState)
         ui->nodeLabelsWidget->setEnabled(true);
         ui->blastSearchWidget->setEnabled(true);
         ui->selectionScrollAreaWidgetContents->setEnabled(true);
+        ui->actionZoom_to_selection->setEnabled(true);
+        ui->actionLoad_CSV->setEnabled(true);
         break;
     }
 }
@@ -1885,47 +1887,64 @@ void MainWindow::bringSelectedNodesToFront()
 
 void MainWindow::selectNodesWithBlastHits()
 {
+    if (ui->blastQueryComboBox->currentText() == "none")
+    {
+        QMessageBox::information(this, "No BLAST hits",
+                                       "To select nodes with BLAST hits, you must first conduct a BLAST search.");
+        return;
+    }
+
     m_scene->blockSignals(true);
     m_scene->clearSelection();
 
+    bool atLeastOneNodeHasBlastHits = false;
     bool atLeastOneNodeSelected = false;
+
     QMapIterator<QString, DeBruijnNode*> i(g_assemblyGraph->m_deBruijnGraphNodes);
     while (i.hasNext())
     {
         i.next();
         DeBruijnNode * node = i.value();
+
+        bool nodeHasBlastHits;
+
+        //If we're in double mode, only select a node if it has a BLAST hit itself.
+        if (g_settings->doubleMode)
+            nodeHasBlastHits = node->thisNodeHasBlastHits();
+
+        //In single mode, select a node if it or its reverse complement has a BLAST hit.
+        else
+            nodeHasBlastHits = node->thisNodeOrReverseComplementHasBlastHits();
+
+        if (nodeHasBlastHits)
+            atLeastOneNodeHasBlastHits = true;
+
         GraphicsItemNode * graphicsItemNode = node->getGraphicsItemNode();
 
         if (graphicsItemNode == 0)
             continue;
 
-        //If we're in double mode, only select a node if it has a BLAST hit itself.
-        if (g_settings->doubleMode)
+        if (nodeHasBlastHits)
         {
-            if (node->thisNodeHasBlastHits())
-            {
-                graphicsItemNode->setSelected(true);
-                atLeastOneNodeSelected = true;
-            }
-        }
-
-        //In single mode, select a node if it or its reverse complement has a BLAST hit.
-        else
-        {
-            if (node->thisNodeOrReverseComplementHasBlastHits())
-            {
-                graphicsItemNode->setSelected(true);
-                atLeastOneNodeSelected = true;
-            }
+            graphicsItemNode->setSelected(true);
+            atLeastOneNodeSelected = true;
         }
     }
     m_scene->blockSignals(false);
     g_graphicsView->viewport()->update();
     selectionChanged();
 
-    if (!atLeastOneNodeSelected)
+    if (!atLeastOneNodeHasBlastHits)
+    {
         QMessageBox::information(this, "No BLAST hits",
                                        "To select nodes with BLAST hits, you must first conduct a BLAST search.");
+        return;
+    }
+
+    if (!atLeastOneNodeSelected)
+        QMessageBox::information(this, "No BLAST hits in visible nodes",
+                                       "No nodes with BLAST hits are currently visible, so there is nothing to select. "
+                                       "Adjust the graph scope to make the nodes with BLAST hits visible.");
     else
         zoomToSelection();
 }
@@ -2070,7 +2089,7 @@ void MainWindow::selectBasedOnContiguity(ContiguityStatus targetContiguityStatus
 
 void MainWindow::openBandageUrl()
 {
-    QDesktopServices::openUrl(QUrl("http://rrwick.github.io/Bandage/"));
+    QDesktopServices::openUrl(QUrl("https://github.com/rrwick/Bandage/wiki"));
 }
 
 
@@ -2100,6 +2119,9 @@ void MainWindow::setWidgetsFromSettings()
     setGraphScopeComboBox(g_settings->graphScope);
     ui->nodeDistanceSpinBox->setValue(g_settings->nodeDistance);
     ui->startingNodesLineEdit->setText(g_settings->startingNodes);
+
+    ui->minReadDepthSpinBox->setValue(g_settings->minReadDepthRange);
+    ui->maxReadDepthSpinBox->setValue(g_settings->maxReadDepthRange);
 }
 
 
@@ -2109,7 +2131,7 @@ void MainWindow::setNodeColourSchemeComboBox(NodeColourScheme nodeColourScheme)
     switch (nodeColourScheme)
     {
     case RANDOM_COLOURS: ui->coloursComboBox->setCurrentIndex(0); break;
-    case ONE_COLOUR: ui->coloursComboBox->setCurrentIndex(1); break;
+    case UNIFORM_COLOURS: ui->coloursComboBox->setCurrentIndex(1); break;
     case READ_DEPTH_COLOUR: ui->coloursComboBox->setCurrentIndex(2); break;
     case BLAST_HITS_SOLID_COLOUR: ui->coloursComboBox->setCurrentIndex(3); break;
     case BLAST_HITS_RAINBOW_COLOUR: ui->coloursComboBox->setCurrentIndex(4); break;
@@ -2125,12 +2147,19 @@ void MainWindow::setGraphScopeComboBox(GraphScope graphScope)
     case WHOLE_GRAPH: ui->graphScopeComboBox->setCurrentIndex(0); break;
     case AROUND_NODE: ui->graphScopeComboBox->setCurrentIndex(1); break;
     case AROUND_BLAST_HITS: ui->graphScopeComboBox->setCurrentIndex(2); break;
+    case READ_DEPTH_RANGE: ui->graphScopeComboBox->setCurrentIndex(3); break;
     }
 }
 
 void MainWindow::nodeDistanceChanged()
 {
     g_settings->nodeDistance = ui->nodeDistanceSpinBox->value();
+}
+
+void MainWindow::readDepthRangeChanged()
+{
+    g_settings->minReadDepthRange = ui->minReadDepthSpinBox->value();
+    g_settings->maxReadDepthRange = ui->maxReadDepthSpinBox->value();
 }
 
 void MainWindow::showEvent(QShowEvent *ev)
@@ -2182,12 +2211,8 @@ void MainWindow::setSelectedNodesWidgetsVisibility(bool visible)
     ui->selectedNodesTextEdit->setVisible(visible);
     ui->selectedNodesModificationWidget->setVisible(visible);
     ui->selectedNodesLengthLabel->setVisible(visible);
-
-    if (visible)
-        ui->selectedNodesSpacer->changeSize(20, 60);
-    else
-        ui->selectedNodesSpacer->changeSize(20, 0);
-
+    ui->selectedNodesDepthLabel->setVisible(visible);
+    ui->selectedNodesSpacerWidget->setVisible(visible);
 }
 
 void MainWindow::setSelectedEdgesWidgetsVisibility(bool visible)
@@ -2195,11 +2220,7 @@ void MainWindow::setSelectedEdgesWidgetsVisibility(bool visible)
     ui->selectedEdgesTitleLabel->setVisible(visible);
     ui->selectedEdgesTextEdit->setVisible(visible);
     ui->selectedEdgesLine->setVisible(visible);
-
-    if (visible)
-        ui->selectedEdgesSpacer->changeSize(20, 60);
-    else
-        ui->selectedEdgesSpacer->changeSize(20, 0);
+    ui->selectedEdgesSpacerWidget->setVisible(visible);
 }
 
 
@@ -2420,7 +2441,314 @@ void MainWindow::refreshDisplay(){
     m_scene->blockSignals(false);
     g_graphicsView->viewport()->update();
 
+}
+
+
+void MainWindow::saveEntireGraphToFasta()
+{
+    QString defaultFileNameAndPath = g_memory->rememberedPath + "/all_graph_nodes.fasta";
+    QString fullFileName = QFileDialog::getSaveFileName(this, "Save entire graph", defaultFileNameAndPath, "FASTA (*.fasta)");
+
+    if (fullFileName != "") //User did not hit cancel
+    {
+        g_memory->rememberedPath = QFileInfo(fullFileName).absolutePath();
+        g_assemblyGraph->saveEntireGraphToFasta(fullFileName);
+    }
+}
+
+void MainWindow::saveEntireGraphToFastaOnlyPositiveNodes()
+{
+    QString defaultFileNameAndPath = g_memory->rememberedPath + "/all_positive_graph_nodes.fasta";
+    QString fullFileName = QFileDialog::getSaveFileName(this, "Save entire graph (only positive nodes)", defaultFileNameAndPath, "FASTA (*.fasta)");
+
+    if (fullFileName != "") //User did not hit cancel
+    {
+        g_memory->rememberedPath = QFileInfo(fullFileName).absolutePath();
+        g_assemblyGraph->saveEntireGraphToFastaOnlyPositiveNodes(fullFileName);
+    }
+}
+
+
+void MainWindow::saveEntireGraphToGfa()
+{
+    QString defaultFileNameAndPath = g_memory->rememberedPath + "/graph.gfa";
+    QString fullFileName = QFileDialog::getSaveFileName(this, "Save entire graph", defaultFileNameAndPath, "GFA (*.gfa)");
+
+    if (fullFileName != "") //User did not hit cancel
+    {
+        g_memory->rememberedPath = QFileInfo(fullFileName).absolutePath();
+        g_assemblyGraph->saveEntireGraphToGfa(fullFileName);
+    }
+}
+
+void MainWindow::saveVisibleGraphToGfa()
+{
+    QString defaultFileNameAndPath = g_memory->rememberedPath + "/graph.gfa";
+    QString fullFileName = QFileDialog::getSaveFileName(this, "Save visible graph", defaultFileNameAndPath, "GFA (*.gfa)");
+
+    if (fullFileName != "") //User did not hit cancel
+    {
+        g_memory->rememberedPath = QFileInfo(fullFileName).absolutePath();
+        g_assemblyGraph->saveVisibleGraphToGfa(fullFileName);
+    }
+}
+
+
+void MainWindow::webBlastSelectedNodes()
+{
+    std::vector<DeBruijnNode *> selectedNodes = m_scene->getSelectedNodes();
+    if (selectedNodes.size() == 0)
+    {
+        QMessageBox::information(this, "Web BLAST selected nodes", "No nodes are selected.\n\n"
+                                                                   "You must first select nodes in the graph before you can can use web BLAST.");
+        return;
+    }
+
+    QByteArray selectedNodesFasta;
+    for (size_t i = 0; i < selectedNodes.size(); ++i)
+        selectedNodesFasta += selectedNodes[i]->getFastaNoNewLinesInSequence();
+    selectedNodesFasta.chop(1); //remove last newline
+
+    QByteArray urlSafeFasta = makeStringUrlSafe(selectedNodesFasta);
+    QByteArray url = "http://blast.ncbi.nlm.nih.gov/Blast.cgi?PROGRAM=blastn&PAGE_TYPE=BlastSearch&LINK_LOC=blasthome&QUERY=" + urlSafeFasta;
+    
+    if (url.length() < 8190)
+        QDesktopServices::openUrl(QUrl(url));
+
+    else
+    {
+        QMessageBox::information(this, "Long sequences", "The selected node sequences are too long to pass to the BLAST web "
+                                                         "interface via the URL.  Bandage has put them in your clipboard so "
+                                                         "you can paste them in.");
+        QClipboard * clipboard = QApplication::clipboard();
+        clipboard->setText(selectedNodesFasta);
+
+        QByteArray url = "http://blast.ncbi.nlm.nih.gov/Blast.cgi?PROGRAM=blastn&PAGE_TYPE=BlastSearch&LINK_LOC=blasthome";
+        QDesktopServices::openUrl(QUrl(url));
+    }
+}
+
+//http://www.ncbi.nlm.nih.gov/staff/tao/URLAPI/new/node101.html#sub:Escape-of-Unsafe
+QByteArray MainWindow::makeStringUrlSafe(QByteArray s)
+{
+    s.replace("%", "%25");
+    s.replace(">", "%3E");
+    s.replace("[", "%5B");
+    s.replace("]", "%5D");
+    s.replace("\n", "%0D%0A");
+    s.replace("|", "%7C");
+    s.replace("@", "%40");
+    s.replace("#", "%23");
+    s.replace("+", "%2B");
+    s.replace(" ", "+");
+    s.replace("\t", "+");
+
+    return s;
+}
+
+
+//This function removes nodes from the visualisation, but leaves them in the
+//actual graph.
+void MainWindow::hideNodes()
+{
+    std::vector<DeBruijnNode *> selectedNodes = m_scene->getSelectedNodes();
+    g_assemblyGraph->removeGraphicsItemNodes(&selectedNodes, !g_settings->doubleMode, m_scene);
+}
+
+
+//This function removes selected nodes/edges from the graph.
+void MainWindow::removeSelection()
+{
+    std::vector<DeBruijnEdge *> selectedEdges = m_scene->getSelectedEdges();
+    std::vector<DeBruijnNode *> selectedNodes = m_scene->getSelectedNodes();
+
+    g_assemblyGraph->removeGraphicsItemEdges(&selectedEdges, true, m_scene);
+    g_assemblyGraph->removeGraphicsItemNodes(&selectedNodes, true, m_scene);
+
+    g_assemblyGraph->deleteEdges(&selectedEdges);
+    g_assemblyGraph->deleteNodes(&selectedNodes);
+
+    g_assemblyGraph->determineGraphInfo();
+    displayGraphDetails();
+
+    //Now that the graph has changed, we have to reset BLAST and contiguity
+    //stuff, as they may no longer apply.
+    cleanUpAllBlast();
+    g_assemblyGraph->resetNodeContiguityStatus();
+}
 
 
 
+void MainWindow::duplicateSelectedNodes()
+{
+    std::vector<DeBruijnNode *> selectedNodes = m_scene->getSelectedNodes();
+    if (selectedNodes.size() == 0)
+    {
+        QMessageBox::information(this, "No nodes selected", "You must first select one or more nodes before using the 'Duplicate selected nodes' function.");
+        return;
+    }
+
+    //Nodes are always duplicated in pairs (both positive and negative), so we
+    //want to compile a list of only positive nodes.
+    QList<DeBruijnNode *> nodesToDuplicate;
+    for (size_t i = 0; i < selectedNodes.size(); ++i)
+    {
+        DeBruijnNode * node = selectedNodes[i];
+        if (node->isNegativeNode())
+            node = node->getReverseComplement();
+        if (!nodesToDuplicate.contains(node))
+            nodesToDuplicate.push_back(node);
+    }
+
+    for (int i = 0; i < nodesToDuplicate.size(); ++i)
+        g_assemblyGraph->duplicateNodePair(nodesToDuplicate[i], m_scene);
+
+    g_assemblyGraph->determineGraphInfo();
+    displayGraphDetails();
+
+    //Now that the graph has changed, we have to reset BLAST and contiguity
+    //stuff, as they may no longer apply.
+    cleanUpAllBlast();
+    g_assemblyGraph->resetNodeContiguityStatus();
+}
+
+void MainWindow::mergeSelectedNodes()
+{
+    std::vector<DeBruijnNode *> selectedNodes = m_scene->getSelectedNodes();
+    if (selectedNodes.size() < 2)
+    {
+        QMessageBox::information(this, "Not enough nodes selected", "You must first select two or more nodes before using the 'Merge selected nodes' function.");
+        return;
+    }
+
+    //Nodes are always merged in pairs (both positive and negative), so we
+    //want to compile a list of only positive nodes.
+    QList<DeBruijnNode *> nodesToMerge;
+    for (size_t i = 0; i < selectedNodes.size(); ++i)
+    {
+        DeBruijnNode * node = selectedNodes[i];
+        if (node->isNegativeNode())
+            node = node->getReverseComplement();
+        if (!nodesToMerge.contains(node))
+            nodesToMerge.push_back(node);
+    }
+
+    if (nodesToMerge.size() < 2)
+    {
+        QMessageBox::information(this, "Not enough nodes selected", "You must first select two or more nodes before using the 'Merge selected nodes' function. "
+                                                                    "Note that two complementary nodes only count as a single node regarding a merge.");
+        return;
+    }
+
+    bool success = g_assemblyGraph->mergeNodes(nodesToMerge, m_scene, true);
+
+    if (!success)
+    {
+        QMessageBox::information(this, "Nodes cannot be merged", "You can only merge nodes that are in a single, unbranching path with no extra edges.");
+        return;
+    }
+
+    g_assemblyGraph->determineGraphInfo();
+    displayGraphDetails();
+
+    //Now that the graph has changed, we have to reset BLAST and contiguity
+    //stuff, as they may no longer apply.
+    cleanUpAllBlast();
+    g_assemblyGraph->resetNodeContiguityStatus();
+}
+
+void MainWindow::mergeAllPossible()
+{
+    int merges;
+    {
+        MyProgressDialog progress(this, "Merging nodes", true, "Cancel merge", "Cancelling merge...",
+                                  "Clicking this button will stop the merging process. Merges that have already completed will remain "
+                                  "merged but no further merging will take place.");
+
+        progress.setWindowModality(Qt::WindowModal);
+        progress.setMaxValue(100);
+        progress.show();
+
+        connect(g_assemblyGraph.data(), SIGNAL(setMergeTotalCount(int)), &progress, SLOT(setMaxValue(int)));
+        connect(g_assemblyGraph.data(), SIGNAL(setMergeCompletedCount(int)), &progress, SLOT(setValue(int)));
+
+
+        g_graphicsView->viewport()->setUpdatesEnabled(false);
+        merges = g_assemblyGraph->mergeAllPossible(m_scene, &progress);
+        g_graphicsView->viewport()->setUpdatesEnabled(true);
+    }
+
+    if (merges > 0)
+    {
+        g_assemblyGraph->determineGraphInfo();
+        displayGraphDetails();
+
+        //Now that the graph has changed, we have to reset BLAST and contiguity
+        //stuff, as they may no longer apply.
+        cleanUpAllBlast();
+        g_assemblyGraph->resetNodeContiguityStatus();
+    }
+    else
+        QMessageBox::information(this, "No possible merges", "The graph contains no nodes that can be merged.");
+}
+
+
+void MainWindow::cleanUpAllBlast()
+{
+    g_blastSearch->cleanUp();
+    g_assemblyGraph->clearAllBlastHitPointers();
+    ui->blastQueryComboBox->clear();
+
+    if (m_blastSearchDialog != 0)
+    {
+        delete m_blastSearchDialog;
+        m_blastSearchDialog = 0;
+    }
+}
+
+
+
+void MainWindow::changeNodeName()
+{
+    DeBruijnNode * selectedNode = m_scene->getOnePositiveSelectedNode();
+    if (selectedNode == 0)
+    {
+        QMessageBox::information(this, "Improper selection", "You must select exactly one node in the graph before using this function.");
+        return;
+    }
+
+    QString oldName = selectedNode->getNameWithoutSign();
+    ChangeNodeNameDialog changeNodeNameDialog(this, oldName);
+
+    if (changeNodeNameDialog.exec()) //The user clicked OK
+    {
+        g_assemblyGraph->changeNodeName(oldName, changeNodeNameDialog.getNewName());
+        selectionChanged();
+        cleanUpAllBlast();
+    }
+}
+
+void MainWindow::changeNodeReadDepth()
+{
+    std::vector<DeBruijnNode *> selectedNodes = m_scene->getSelectedPositiveNodes();
+    if (selectedNodes.size() == 0)
+    {
+        QMessageBox::information(this, "Improper selection", "You must select at least one node in the graph before using this function.");
+        return;
+    }
+
+    double oldDepth = g_assemblyGraph->getMeanReadDepth(selectedNodes);
+    ChangeNodeReadDepthDialog changeNodeReadDepthDialog(this,
+                                                        &selectedNodes,
+                                                        oldDepth);
+
+    if (changeNodeReadDepthDialog.exec()) //The user clicked OK
+    {
+        g_assemblyGraph->changeNodeReadDepth(&selectedNodes,
+                                             changeNodeReadDepthDialog.getNewDepth());
+        selectionChanged();
+        g_assemblyGraph->recalculateAllReadDepthsRelativeToDrawnMean();
+        g_assemblyGraph->recalculateAllNodeWidths();
+        g_graphicsView->viewport()->update();
+    }
 }

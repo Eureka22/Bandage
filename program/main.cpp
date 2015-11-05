@@ -49,16 +49,18 @@ void printUsage(QTextStream * out, bool all)
     *out << endl;
     if (all)
         printSettingsUsage(out);
+    *out << "Online Bandage help: https://github.com/rrwick/Bandage/wiki" << endl;
+    *out << endl;
 }
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     QApplication::setApplicationName("Bandage");
-    QApplication::setApplicationVersion("0.6.3");
+    QApplication::setApplicationVersion("0.7.0");
 
     QTextStream out(stdout);
-    QTextStream err(stdout);
+    QTextStream err(stderr);
 
     //Create the important global objects.
     g_settings.reset(new Settings());

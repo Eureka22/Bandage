@@ -26,6 +26,7 @@
 #include <QApplication>
 #include "../graph/debruijnnode.h"
 #include "../program/memory.h"
+#include <math.h>
 
 BlastSearch::BlastSearch() :
     m_blastQueries(), m_tempDirectory("bandage_temp/")
@@ -53,6 +54,8 @@ void BlastSearch::cleanUp()
 
 //This function uses the contents of m_blastOutput (the raw output from the
 //BLAST search) to construct the BlastHit objects.
+//It looks at the filters to possibly exclude hits which fail to meet user-
+//defined thresholds.
 void BlastSearch::buildHitsFromBlastOutput()
 {
     QStringList blastHitList = m_blastOutput.split("\n", QString::SkipEmptyParts);
@@ -63,7 +66,7 @@ void BlastSearch::buildHitsFromBlastOutput()
         QStringList alignmentParts = hitString.split('\t');
 
         if (alignmentParts.size() < 12)
-            return;
+            continue;
 
         QString queryName = alignmentParts[0];
         QString nodeLabel = alignmentParts[1];
@@ -75,7 +78,7 @@ void BlastSearch::buildHitsFromBlastOutput()
         int queryEnd = alignmentParts[7].toInt();
         int nodeStart = alignmentParts[8].toInt();
         int nodeEnd = alignmentParts[9].toInt();
-        double eValue = alignmentParts[10].toDouble();
+        SciNot eValue(alignmentParts[10]);
         double bitScore = alignmentParts[11].toDouble();
 
         //Only save BLAST hits that are on forward strands.
@@ -87,15 +90,34 @@ void BlastSearch::buildHitsFromBlastOutput()
         if (g_assemblyGraph->m_deBruijnGraphNodes.contains(nodeName))
             node = g_assemblyGraph->m_deBruijnGraphNodes[nodeName];
         else
-            return;
+            continue;
 
         BlastQuery * query = g_blastSearch->m_blastQueries.getQueryFromName(queryName);
         if (query == 0)
-            return;
+            continue;
 
         QSharedPointer<BlastHit> hit(new BlastHit(query, node, percentIdentity, alignmentLength,
                                                   numberMismatches, numberGapOpens, queryStart, queryEnd,
                                                   nodeStart, nodeEnd, eValue, bitScore));
+
+        //Check the user-defined filters.
+        if (g_settings->blastAlignmentLengthFilterOn &&
+                alignmentLength < g_settings->blastAlignmentLengthFilterValue)
+            continue;
+        if (g_settings->blastQueryCoverageFilterOn)
+        {
+            if (100.0 * hit->getQueryCoverageFraction() <= g_settings->blastQueryCoverageFilterValue)
+                continue;
+        }
+        if (g_settings->blastIdentityFilterOn &&
+                percentIdentity < g_settings->blastIdentityFilterValue)
+            continue;
+        if (g_settings->blastEValueFilterOn &&
+                eValue > g_settings->blastEValueFilterValue)
+                continue;
+        if (g_settings->blastBitScoreFilterOn &&
+                bitScore < g_settings->blastBitScoreFilterValue)
+            continue;
 
         m_allHits.push_back(hit);
         query->addHit(hit);
@@ -115,7 +137,28 @@ void BlastSearch::findQueryPaths()
 QString BlastSearch::getNodeNameFromString(QString nodeString)
 {
     QStringList nodeStringParts = nodeString.split("_");
-    return nodeStringParts[1];
+
+    //The node string format should look like this:
+    //NODE_nodename_length_123_cov_1.23
+
+    if (nodeStringParts.size() < 6)
+        return "";
+
+    if (nodeStringParts.size() == 6)
+        return nodeStringParts[1];
+
+    //If the code got here, there are more than 6 parts.  This means there are
+    //underscores in the node name (happens a lot with Trinity graphs).  So we
+    //need to pull out the parts which consitute the name.
+    int underscoreCount = nodeStringParts.size() - 6;
+    QString nodeName = "";
+    for (int i = 0; i <= underscoreCount; ++i)
+    {
+        nodeName += nodeStringParts[1+i];
+        if (i < underscoreCount)
+            nodeName += "_";
+    }
+    return nodeName;
 }
 
 

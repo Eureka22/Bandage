@@ -73,7 +73,11 @@ SOURCES += \
     ui/querypathspushbutton.cpp \
     ui/querypathsdialog.cpp \
     blast/blastquerypath.cpp \
-    tests/bandagetests.cpp
+    tests/bandagetests.cpp \
+    ui/blasthitfiltersdialog.cpp \
+    program/scinot.cpp \
+    ui/changenodenamedialog.cpp \
+    ui/changenodereaddepthdialog.cpp
 
 HEADERS  += \
     program/settings.h \
@@ -121,7 +125,11 @@ HEADERS  += \
     graph/querydistance.h \
     ui/querypathspushbutton.h \
     ui/querypathsdialog.h \
-    blast/blastquerypath.h
+    blast/blastquerypath.h \
+    ui/blasthitfiltersdialog.h \
+    program/scinot.h \
+    ui/changenodenamedialog.h \
+    ui/changenodereaddepthdialog.h
 
 FORMS    += \
     ui/mainwindow.ui \
@@ -131,7 +139,10 @@ FORMS    += \
     ui/blastsearchdialog.ui \
     ui/myprogressdialog.ui \
     ui/pathspecifydialog.ui \
-    ui/querypathsdialog.ui
+    ui/querypathsdialog.ui \
+    ui/blasthitfiltersdialog.ui \
+    ui/changenodenamedialog.ui \
+    ui/changenodereaddepthdialog.ui
 
 
 # These includes are configured assuming that the OGDF

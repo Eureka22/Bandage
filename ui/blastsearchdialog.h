@@ -60,6 +60,7 @@ private:
     void runBlastSearches(bool separateThread);
     void makeQueryRow(int row);
     void deleteQueryPathsDialog();
+    void setFilterText();
 
 private slots:
     void afterWindowShow();
@@ -81,6 +82,7 @@ private slots:
     void queryShownChanged();
     void showPathsDialog(BlastQuery * query);
     void queryPathSelectionChangedSlot();
+    void openFiltersDialog();
 
 signals:
     void blastChanged();

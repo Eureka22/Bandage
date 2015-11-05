@@ -23,6 +23,7 @@
 #include <QString>
 #include <QColor>
 #include <QTextStream>
+#include "../program/scinot.h"
 
 bool checkForHelp(QStringList arguments);
 bool checkForHelpAll(QStringList arguments);
@@ -30,6 +31,7 @@ bool checkForVersion(QStringList arguments);
 
 QString checkOptionForInt(QString option, QStringList * arguments, int min, int max);
 QString checkOptionForFloat(QString option, QStringList * arguments, double min, double max);
+QString checkOptionForSciNot(QString option, QStringList * arguments, SciNot min, SciNot max);
 QString checkOptionForString(QString option, QStringList * arguments,
                              QStringList validOptionsList, QString validDescription = "");
 QString checkOptionForColour(QString option, QStringList * arguments);
@@ -45,6 +47,7 @@ bool isOptionAndValuePresent(QString option, QString value, QStringList * argume
 
 int getIntOption(QString option, QStringList * arguments);
 double getFloatOption(QString option, QStringList * arguments);
+SciNot getSciNotOption(QString option, QStringList * arguments);
 QColor getColourOption(QString option, QStringList * arguments);
 NodeColourScheme getColourSchemeOption(QString option, QStringList * arguments);
 GraphScope getGraphScopeOption(QString option, QStringList * arguments);
@@ -62,5 +65,6 @@ QString getColourName(QColor colour);
 
 bool createBlastTempDirectory();
 void deleteBlastTempDirectory();
+
 
 #endif // COMMANDCOMMANDLINEFUNCTIONS_H

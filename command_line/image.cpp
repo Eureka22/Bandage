@@ -32,7 +32,7 @@
 int bandageImage(QStringList arguments)
 {
     QTextStream out(stdout);
-    QTextStream err(stdout);
+    QTextStream err(stderr);
 
     if (checkForHelp(arguments))
     {
@@ -57,7 +57,7 @@ int bandageImage(QStringList arguments)
 
     if (!checkIfFileExists(graphFilename))
     {
-        err << "Bandage error: " << graphFilename << " does not exist." << endl;
+        err << "Bandage error: " << graphFilename << " does not exist" << endl;
         return 1;
     }
 
@@ -211,6 +211,8 @@ void printImageUsage(QTextStream * out, bool all)
     printCommonHelp(out);
     if (all)
         printSettingsUsage(out);
+    *out << "Online Bandage help: https://github.com/rrwick/Bandage/wiki" << endl;
+    *out << endl;
 }
 
 QString checkForInvalidImageOptions(QStringList arguments)

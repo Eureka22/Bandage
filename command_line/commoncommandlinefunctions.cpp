@@ -23,6 +23,7 @@
 #include "../blast/blastsearch.h"
 #include <QCoreApplication>
 #include "../program/memory.h"
+#include <QStringList>
 
 
 void printSettingsUsage(QTextStream * out)
@@ -42,14 +43,18 @@ void printSettingsUsage(QTextStream * out)
     *out << "          used, then the --nodes option must also be used.  If the aroundblast" << endl;
     *out << "          scope is used, a BLAST query must be given with the --query option." << endl;
     *out << "          --scope <scope>     Graph scope, from one of the following options:" << endl;
-    *out << "                              entire, aroundnodes, aroundblast (default:" << endl;
-    *out << "                              entire)" << endl;
+    *out << "                              entire, aroundnodes, aroundblast, depthrange" << endl;
+    *out << "                              (default: entire)" << endl;
     *out << "          --nodes <list>      A comma-separated list of starting nodes for the" << endl;
     *out << "                              aroundnodes scope (default: none)" << endl;
     *out << "          --partial           Use partial node name matching (default: exact" << endl;
     *out << "                              node name matching)" << endl;
     *out << "          --distance <int>    The number of node steps away to draw for the" << endl;
     *out << "                              aroundnodes and aroundblast scopes (default: " << QString::number(g_settings->nodeDistance) << ")" << endl;
+    *out << "          --mindepth <float>  The minimum allowed read depth for the depthrange" << endl;
+    *out << "                              scopes (default: " << QString::number(g_settings->minReadDepthRange) << ")" << endl;
+    *out << "          --maxdepth <float>  The maximum allowed read depth for the depthrange" << endl;
+    *out << "                              scopes (default: " << QString::number(g_settings->maxReadDepthRange) << ")" << endl;
     *out << endl;
     *out << "          Graph layout" << endl;
     *out << "          ---------------------------------------------------------------------" << endl;
@@ -109,12 +114,12 @@ void printSettingsUsage(QTextStream * out)
     *out << "          Random colour scheme" << endl;
     *out << "          ---------------------------------------------------------------------" << endl;
     *out << "          These settings only apply when the random colour scheme is used." << endl;
-    *out << "          --ransatpos <int>   Positive node saturation (0-255, default: " + QString::number(g_settings->randomColourPositiveSaturation) + ")" << endl;
-    *out << "          --ransatneg <int>   Negative node saturation (0-255, default: " + QString::number(g_settings->randomColourNegativeSaturation) + ")" << endl;
-    *out << "          --ranligpos <int>   Positive node lightness (0-255, default: " + QString::number(g_settings->randomColourPositiveLightness) + ")" << endl;
-    *out << "          --ranligneg <int>   Negative node lightness (0-255, default: " + QString::number(g_settings->randomColourNegativeLightness) + ")" << endl;
-    *out << "          --ranopapos <int>   Positive node opacity (0-255, default: " + QString::number(g_settings->randomColourPositiveOpacity) + ")" << endl;
-    *out << "          --ranopaneg <int>   Negative node opacity (0-255, default: " + QString::number(g_settings->randomColourNegativeOpacity) + ")" << endl;
+    *out << "          --ransatpos <int>   Positive node saturation (0 to 255, default: " + QString::number(g_settings->randomColourPositiveSaturation) + ")" << endl;
+    *out << "          --ransatneg <int>   Negative node saturation (0 to 255, default: " + QString::number(g_settings->randomColourNegativeSaturation) + ")" << endl;
+    *out << "          --ranligpos <int>   Positive node lightness (0 to 255, default: " + QString::number(g_settings->randomColourPositiveLightness) + ")" << endl;
+    *out << "          --ranligneg <int>   Negative node lightness (0 to 255, default: " + QString::number(g_settings->randomColourNegativeLightness) + ")" << endl;
+    *out << "          --ranopapos <int>   Positive node opacity (0 to 255, default: " + QString::number(g_settings->randomColourPositiveOpacity) + ")" << endl;
+    *out << "          --ranopaneg <int>   Negative node opacity (0 to 255, default: " + QString::number(g_settings->randomColourNegativeOpacity) + ")" << endl;
     *out << endl;
     *out << "          Uniform colour scheme" << endl;
     *out << "          ---------------------------------------------------------------------" << endl;
@@ -144,6 +149,21 @@ void printSettingsUsage(QTextStream * out)
     *out << "                              Format BLAST parameters exactly as they would be" << endl;
     *out << "                              used for blastn/tblastn on the command line, and" << endl;
     *out << "                              enclose them in quotes." << endl;
+    *out << "          --alfilter <int>    Alignment length filter for BLAST hits. Hits with" << endl;
+    *out << "                              shorter alignments will be excluded (0 to" << endl;
+    *out << "                              1000000, default: off)" << endl;
+    *out << "          --qcfilter <float>  Query coverage filter for BLAST hits. Hits with" << endl;
+    *out << "                              less coverage will be excluded (0 to 100," << endl;
+    *out << "                              default: off)" << endl;
+    *out << "          --ifilter <float>   Identity filter for BLAST hits. Hits with less" << endl;
+    *out << "                              identity will be excluded (0 to 100, default:" << endl;
+    *out << "                              off)" << endl;
+    *out << "          --evfilter <sci>    E-value filter for BLAST hits. Hits with larger" << endl;
+    *out << "                              e-values will be excluded (1e-999 to 9.9e1," << endl;
+    *out << "                              default: off)" << endl;
+    *out << "          --bsfilter <float>  Bit score filter for BLAST hits. Hits with lower" << endl;
+    *out << "                              bit scores will be excluded (0 to 1000000," << endl;
+    *out << "                              default: off)" << endl;
     *out << endl;
     *out << "          BLAST query paths" << endl;
     *out << "          ---------------------------------------------------------------------" << endl;
@@ -155,16 +175,15 @@ void printSettingsUsage(QTextStream * out)
     *out << "                              covered by a query path (0.3 to 1.0, default:" << endl;
     *out << "                              " + QString::number(g_settings->minQueryCoveredByPath) + ")" << endl;
     *out << "          --minhitcov <float> Minimum fraction of a BLAST query which must be" << endl;
-    *out << "                              covered by BLAST hits in a query path (0.3 to 1.0," << endl;
-    *out << "                              default:" + QString::number(g_settings->minQueryCoveredByPath) + ")" << endl;
+    *out << "                              covered by BLAST hits in a query path (0.3 to" << endl;
+    *out << "                              1.0, default: " + QString::number(g_settings->minQueryCoveredByPath) + ")" << endl;
     *out << "          --minmeanid <float> Minimum mean identity of BLAST hits in a query" << endl;
     *out << "                              path (0.0 to 1.0, default: " + QString::number(g_settings->minQueryCoveredByPath) + ")" << endl;
     *out << "          --maxlendis <float> Maximum allowed relative length discrepancy" << endl;
     *out << "                              between a BLAST query and its path in the graph" << endl;
     *out << "                              (0.0 to 0.5, default: " << QString::number(g_settings->maxLengthDiscrepancy) + ")" << endl;
-    *out << "          --maxevprod <int>   Maximum e-value product for all BLAST hits in a" << endl;
-    *out << "                              query path, given as a power of ten" << endl;
-    *out << "                              (-1000 to 1, default: " << QString::number(g_settings->maxEValueProductPower) + ")" << endl;
+    *out << "          --maxevprod <sci>   Maximum e-value product for all BLAST hits in a" << endl;
+    *out << "                              query path, (1e-999 to 9.9e1, default: " << g_settings->maxEValueProduct.asString(true) + ")" << endl;
     *out << endl;
 }
 
@@ -177,7 +196,7 @@ QString checkForInvalidOrExcessSettings(QStringList * arguments)
     QStringList argumentsCopy = *arguments;
 
     QStringList validScopeOptions;
-    validScopeOptions << "entire" << "aroundnodes" << "aroundblast";
+    validScopeOptions << "entire" << "aroundnodes" << "aroundblast" << "depthrange";
     QString error = checkOptionForString("--scope", arguments, validScopeOptions);
     if (error.length() > 0) return error;
 
@@ -187,6 +206,22 @@ QString checkForInvalidOrExcessSettings(QStringList * arguments)
 
     error = checkOptionForInt("--distance", arguments, 0, 100);
     if (error.length() > 0) return error;
+
+    error = checkOptionForFloat("--mindepth", arguments, 0.0, 1000000.0);
+    if (error.length() > 0) return error;
+    error = checkOptionForFloat("--maxdepth", arguments, 0.0, 1000000.0);
+    if (error.length() > 0) return error;
+
+    //Make sure that the min read depth is less than or equal to the max read
+    //depth.
+    double minReadDepth = g_settings->minReadDepthRange;
+    double maxReadDepth = g_settings->maxReadDepthRange;
+    if (isOptionPresent("--mindepth", &argumentsCopy))
+        minReadDepth = getFloatOption("--mindepth", &argumentsCopy);
+    if (isOptionPresent("--maxdepth", &argumentsCopy))
+        maxReadDepth = getFloatOption("--maxdepth", &argumentsCopy);
+    if (minReadDepth > maxReadDepth)
+        return "the maximum read depth must be greater than or equal to the minimum read depth";
 
     if (isOptionPresent("--query", arguments) && g_memory->commandLineCommand == NO_COMMAND)
         return "The --query option can only be used with Bandage load and Bandage image";
@@ -202,11 +237,11 @@ QString checkForInvalidOrExcessSettings(QStringList * arguments)
     error = checkOptionForInt("--quality", arguments, 1, 5);
     if (error.length() > 0) return error;
 
-    error = checkOptionForFloat("--nodewidth", arguments, 0.5, 1000);
+    error = checkOptionForFloat("--nodewidth", arguments, 0.5, 1000.0);
     if (error.length() > 0) return error;
     error = checkOptionForFloat("--depwidth", arguments, 0.0, 1.0);
     if (error.length() > 0) return error;
-    error = checkOptionForFloat("--depwidth", arguments, 0.1, 1.0);
+    error = checkOptionForFloat("--deppower", arguments, 0.1, 1.0);
     if (error.length() > 0) return error;
 
     error = checkOptionForFloat("--edgewidth", arguments, 0.1, 1000.0);
@@ -279,7 +314,18 @@ QString checkForInvalidOrExcessSettings(QStringList * arguments)
     if (error.length() > 0) return error;
     error = checkOptionForFloat("--maxlendis", arguments, 0.0, 0.5);
     if (error.length() > 0) return error;
-    error = checkOptionForInt("--maxevprod", arguments, -1000, 1);
+    error = checkOptionForSciNot("--maxevprod", arguments, SciNot(1.0, -999), SciNot(9.9, 1));
+    if (error.length() > 0) return error;
+
+    error = checkOptionForInt("--alfilter", arguments, 0, 1000000);
+    if (error.length() > 0) return error;
+    error = checkOptionForFloat("--qcfilter", arguments, 0.0, 100.0);
+    if (error.length() > 0) return error;
+    error = checkOptionForFloat("--ifilter", arguments, 0.0, 100.0);
+    if (error.length() > 0) return error;
+    error = checkOptionForSciNot("--evfilter", arguments, SciNot(1.0, -999), SciNot(9.9, 1));
+    if (error.length() > 0) return error;
+    error = checkOptionForFloat("--bsfilter", arguments, 0.0, 1000000.0);
     if (error.length() > 0) return error;
 
     bool blastScope = isOptionAndValuePresent("--scope", "aroundblast", &argumentsCopy);
@@ -304,6 +350,11 @@ void parseSettings(QStringList arguments)
 
     if (isOptionPresent("--distance", &arguments))
         g_settings->nodeDistance = getIntOption("--distance", &arguments);
+
+    if (isOptionPresent("--mindepth", &arguments))
+        g_settings->minReadDepthRange = getFloatOption("--mindepth", &arguments);
+    if (isOptionPresent("--maxdepth", &arguments))
+        g_settings->maxReadDepthRange = getFloatOption("--maxdepth", &arguments);
 
     if (isOptionPresent("--nodes", &arguments))
         g_settings->startingNodes = getStringOption("--nodes", &arguments);
@@ -336,8 +387,8 @@ void parseSettings(QStringList arguments)
         g_settings->averageNodeWidth = getFloatOption("--nodewidth", &arguments);
     if (isOptionPresent("--depwidth", &arguments))
         g_settings->readDepthEffectOnWidth = getFloatOption("--depwidth", &arguments);
-    if (isOptionPresent("--depwidth", &arguments))
-        g_settings->readDepthPower = getFloatOption("--depwidth", &arguments);
+    if (isOptionPresent("--deppower", &arguments))
+        g_settings->readDepthPower = getFloatOption("--deppower", &arguments);
 
     if (isOptionPresent("--edgewidth", &arguments))
         g_settings->edgeWidth = getFloatOption("--edgewidth", &arguments);
@@ -435,7 +486,33 @@ void parseSettings(QStringList arguments)
     if (isOptionPresent("--maxlendis", &arguments))
         g_settings->maxLengthDiscrepancy = getFloatOption("--maxlendis", &arguments);
     if (isOptionPresent("--maxevprod", &arguments))
-        g_settings->maxEValueProductPower = getIntOption("--maxevprod", &arguments);
+        g_settings->maxEValueProduct = getSciNotOption("--maxevprod", &arguments);
+
+    if (isOptionPresent("--alfilter", &arguments))
+    {
+        g_settings->blastAlignmentLengthFilterOn = true;
+        g_settings->blastAlignmentLengthFilterValue = getIntOption("--alfilter", &arguments);
+    }
+    if (isOptionPresent("--qcfilter", &arguments))
+    {
+        g_settings->blastQueryCoverageFilterOn = true;
+        g_settings->blastQueryCoverageFilterValue = getFloatOption("--qcfilter", &arguments);
+    }
+    if (isOptionPresent("--ifilter", &arguments))
+    {
+        g_settings->blastIdentityFilterOn = true;
+        g_settings->blastIdentityFilterValue = getFloatOption("--ifilter", &arguments);
+    }
+    if (isOptionPresent("--evfilter", &arguments))
+    {
+        g_settings->blastEValueFilterOn = true;
+        g_settings->blastEValueFilterValue = getSciNotOption("--evfilter", &arguments);
+    }
+    if (isOptionPresent("--bsfilter", &arguments))
+    {
+        g_settings->blastBitScoreFilterOn = true;
+        g_settings->blastBitScoreFilterValue = getFloatOption("--bsfilter", &arguments);
+    }
 }
 
 
@@ -541,6 +618,45 @@ QString checkOptionForFloat(QString option, QStringList * arguments, double min,
     return "";
 }
 
+//Returns empty string if everything is okay and an error
+//message if there's a problem.  If everything is okay, it
+//also removes the option and its value from arguments.
+QString checkOptionForSciNot(QString option, QStringList * arguments, SciNot min, SciNot max)
+{
+    int optionIndex = arguments->indexOf(option);
+
+    //If the option isn't found, that's fine.
+    if (optionIndex == -1)
+        return "";
+
+    int sciNotIndex = optionIndex + 1;
+
+    //If nothing follows the option, that's a problem.
+    if (sciNotIndex >= arguments->size())
+        return option + " must be followed by a number in scientific notation";
+
+    //If the thing following the option isn't a number in scientific notation,
+    //that's a problem.
+    if (!SciNot::isValidSciNotString(arguments->at(sciNotIndex)))
+        return option + " must be followed by a number in scientific notation";
+
+    SciNot optionSciNot = SciNot(arguments->at(sciNotIndex));
+
+    //Check the range of the option.
+    if (optionSciNot < min || optionSciNot > max)
+        return "Value of " + option + " must be between "
+                + min.asString(true) + " and " + max.asString(true) +
+                " (inclusive)";
+
+    //If the code got here, the option and its number are okay.
+    //Remove them from the arguments.
+    arguments->removeAt(sciNotIndex);
+    arguments->removeAt(optionIndex);
+
+    return "";
+}
+
+
 
 //Returns empty string if everything is okay and an error
 //message if there's a problem.  If everything is okay, it
@@ -632,7 +748,7 @@ QString checkOptionForFile(QString option, QStringList * arguments)
 
     //If the thing that follows the option isn't a file that's a problem
     if (!checkIfFileExists(arguments->at(fileIndex)))
-        return option + " must be followed by a a valid filename";
+        return option + " must be followed by a valid filename";
 
     //If the code got here, the option and its file are okay.
     //Remove them from the arguments.
@@ -745,6 +861,20 @@ double getFloatOption(QString option, QStringList * arguments)
      return arguments->at(floatIndex).toDouble();
 }
 
+
+SciNot getSciNotOption(QString option, QStringList * arguments)
+{
+     int optionIndex = arguments->indexOf(option);
+     if (optionIndex == -1)
+         return 0;
+
+     int sciNotIndex = optionIndex + 1;
+     if (sciNotIndex >= arguments->size())
+         return SciNot();
+
+     return SciNot(arguments->at(sciNotIndex));
+}
+
 NodeColourScheme getColourSchemeOption(QString option, QStringList * arguments)
 {
     NodeColourScheme defaultScheme = RANDOM_COLOURS;
@@ -763,7 +893,7 @@ NodeColourScheme getColourSchemeOption(QString option, QStringList * arguments)
     if (colourString == "random")
         return RANDOM_COLOURS;
     else if (colourString == "uniform")
-        return ONE_COLOUR;
+        return UNIFORM_COLOURS;
     else if (colourString == "readdepth")
         return READ_DEPTH_COLOUR;
     else if (colourString == "blastsolid")
@@ -795,6 +925,8 @@ GraphScope getGraphScopeOption(QString option, QStringList * arguments)
         return AROUND_NODE;
     else if (scopeString == "aroundblast")
         return AROUND_BLAST_HITS;
+    else if (scopeString == "depthrange")
+        return READ_DEPTH_RANGE;
 
     //Entire graph scope is the default.
     return WHOLE_GRAPH;

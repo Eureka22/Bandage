@@ -59,6 +59,8 @@ Settings::Settings()
     displayNodeNames = false;
     displayNodeLengths = false;
     displayNodeReadDepth = false;
+    displayNodeCsvData = false;
+    displayNodeCsvDataCol = 0;
     displayBlastHits = false;
     labelFont = QFont();
     textOutline = true;
@@ -111,7 +113,21 @@ Settings::Settings()
     minQueryCoveredByHits = 0.9;
     minMeanHitIdentity = 0.5;
     maxLengthDiscrepancy = 0.05;
-    maxEValueProductPower = -10;
+    maxEValueProduct = SciNot(1.0, -10);
 
     blastSearchParameters = "";
+
+    blastAlignmentLengthFilterOn = false;
+    blastAlignmentLengthFilterValue = 100;
+    blastQueryCoverageFilterOn = false;
+    blastQueryCoverageFilterValue = 50.0;
+    blastIdentityFilterOn = false;
+    blastIdentityFilterValue = 90.0;
+    blastEValueFilterOn = false;
+    blastEValueFilterValue = SciNot(1.0, -10);
+    blastBitScoreFilterOn = false;
+    blastBitScoreFilterValue = 1000.0;
+
+    minReadDepthRange = 10.0;
+    maxReadDepthRange = 100.0;
 }

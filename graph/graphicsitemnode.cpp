@@ -85,6 +85,34 @@ GraphicsItemNode::GraphicsItemNode(DeBruijnNode * deBruijnNode,
 }
 
 
+//This constructor makes a new GraphicsItemNode by copying the line points of
+//the given node.
+GraphicsItemNode::GraphicsItemNode(DeBruijnNode * deBruijnNode,
+                                   GraphicsItemNode * toCopy,
+                                   QGraphicsItem * parent) :
+    QGraphicsItem(parent), m_deBruijnNode(deBruijnNode),
+    m_hasArrow(toCopy->m_hasArrow),
+    m_linePoints(toCopy->m_linePoints)
+{
+    setWidth();
+    remakePath();
+}
+
+//This constructor makes a new GraphicsItemNode with a specific collection of
+//line points.
+GraphicsItemNode::GraphicsItemNode(DeBruijnNode * deBruijnNode,
+                                   std::vector<QPointF> linePoints,
+                                   QGraphicsItem * parent) :
+    QGraphicsItem(parent), m_deBruijnNode(deBruijnNode),
+    m_hasArrow(g_settings->doubleMode),
+    m_linePoints(linePoints)
+{
+    setWidth();
+    remakePath();
+}
+
+
+
 void GraphicsItemNode::paint(QPainter * painter, const QStyleOptionGraphicsItem *, QWidget *)
 {
     //This code lets me see the node's bounding box.
@@ -296,7 +324,7 @@ void GraphicsItemNode::drawTextPathAtLocation(QPainter * painter, QPainterPath t
     QPointF offset(0.0, textHeight / 2.0);
 
     painter->translate(centre);
-    painter->rotate(-g_graphicsView->m_rotation);
+    painter->rotate(-g_graphicsView->getRotation());
     painter->translate(offset);
 
     if (g_settings->textOutline)
@@ -311,7 +339,7 @@ void GraphicsItemNode::drawTextPathAtLocation(QPainter * painter, QPainterPath t
 
     painter->fillPath(textPath, QBrush(g_settings->textColour));
     painter->translate(-offset);
-    painter->rotate(g_graphicsView->m_rotation);
+    painter->rotate(g_graphicsView->getRotation());
     painter->translate(-centre);
 }
 
@@ -321,7 +349,7 @@ void GraphicsItemNode::setNodeColour()
 {
     switch (g_settings->nodeColourScheme)
     {
-    case ONE_COLOUR:
+    case UNIFORM_COLOURS:
         if (m_deBruijnNode->isSpecialNode())
             m_colour = g_settings->uniformNodeSpecialColour;
         else if (usePositiveNodeColour())
@@ -528,15 +556,32 @@ void GraphicsItemNode::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
     }
     graphicsScene->possiblyExpandSceneRectangle(&nodesToMove);
 
-    //It is now necessary to remake the paths for each edge that is connected
-    //to a moved node.
+    fixEdgePaths(&nodesToMove);
+}
+
+
+//This function remakes edge paths.  If nodes is passed, it will remake the
+//edge paths for all of the nodes.  If nodes isn't passed, then it will just
+//do it for this node.
+void GraphicsItemNode::fixEdgePaths(std::vector<GraphicsItemNode *> * nodes)
+{
     std::set<DeBruijnEdge *> edgesToFix;
-    for (size_t i = 0; i < nodesToMove.size(); ++i)
+
+    if (nodes == 0)
     {
-        DeBruijnNode * node = nodesToMove[i]->m_deBruijnNode;
-        const std::vector<DeBruijnEdge *> * edges = node->getEdgesPointer();
+        const std::vector<DeBruijnEdge *> * edges = m_deBruijnNode->getEdgesPointer();
         for (size_t j = 0; j < edges->size(); ++j)
             edgesToFix.insert((*edges)[j]);
+    }
+    else
+    {
+        for (size_t i = 0; i < nodes->size(); ++i)
+        {
+            DeBruijnNode * node = (*nodes)[i]->m_deBruijnNode;
+            const std::vector<DeBruijnEdge *> * edges = node->getEdgesPointer();
+            for (size_t j = 0; j < edges->size(); ++j)
+                edgesToFix.insert((*edges)[j]);
+        }
     }
 
     for (std::set<DeBruijnEdge *>::iterator i = edgesToFix.begin(); i != edgesToFix.end(); ++i)
@@ -822,6 +867,8 @@ QStringList GraphicsItemNode::getNodeText()
         nodeText << formatIntForDisplay(m_deBruijnNode->getLength()) + " bp";
     if (g_settings->displayNodeReadDepth)
         nodeText << formatDoubleForDisplay(m_deBruijnNode->getReadDepth(), 1) + "x";
+    if (g_settings->displayNodeCsvData && m_deBruijnNode->hasCsvData())
+        nodeText << m_deBruijnNode->getCsvLine(g_settings->displayNodeCsvDataCol);
 
     return nodeText;
 }
@@ -913,6 +960,18 @@ double GraphicsItemNode::getNodeWidth(double readDepthRelativeToMeanDrawnReadDep
 //directly on top of their complement nodes.
 void GraphicsItemNode::shiftPointsLeft()
 {
+    shiftPointSideways(true);
+}
+
+void GraphicsItemNode::shiftPointsRight()
+{
+    shiftPointSideways(false);
+}
+
+void GraphicsItemNode::shiftPointSideways(bool left)
+{
+    prepareGeometryChange();
+
     //The collection of line points should be at least
     //two large.  But just to be safe, quit now if it
     //is not.
@@ -953,12 +1012,18 @@ void GraphicsItemNode::shiftPointsLeft()
 
         QLineF shiftLine = nodeDirection.normalVector().unitVector();
         shiftLine.setLength(shiftDistance);
-        QPointF shiftVector = shiftLine.p2() - shiftLine.p1();
+
+        QPointF shiftVector;
+        if (left)
+            shiftVector = shiftLine.p2() - shiftLine.p1();
+        else
+            shiftVector = shiftLine.p1() - shiftLine.p2();
         QPointF newPoint = point + shiftVector;
         m_linePoints[i] = newPoint;
     }
-}
 
+    remakePath();
+}
 
 
 void GraphicsItemNode::getBlastHitsTextAndLocationThisNode(std::vector<QString> * blastHitText,
@@ -1108,5 +1173,6 @@ bool GraphicsItemNode::anyNodeDisplayText()
     return g_settings->displayNodeCustomLabels ||
             g_settings->displayNodeNames ||
             g_settings->displayNodeLengths ||
-            g_settings->displayNodeReadDepth;
+            g_settings->displayNodeReadDepth ||
+            g_settings->displayNodeCsvData;
 }

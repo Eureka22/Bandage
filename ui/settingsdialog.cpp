@@ -22,6 +22,8 @@
 #include <QMessageBox>
 #include "../program/settings.h"
 #include "colourbutton.h"
+#include "../graph/assemblygraph.h"
+#include "../program/scinot.h"
 
 SettingsDialog::SettingsDialog(QWidget *parent) :
     QDialog(parent),
@@ -56,7 +58,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     ui->contiguityStartingColourButton->m_name = "Contiguity starting colour";
 
     connect(ui->restoreDefaultsButton, SIGNAL(clicked()), this, SLOT(restoreDefaults()));
-    connect(ui->readDepthValueManualRadioButton, SIGNAL(toggled(bool)), this, SLOT(enableDisableReadDepthValueSpinBoxes()));
+    connect(ui->readDepthValueManualRadioButton, SIGNAL(toggled(bool)), this, SLOT(enableDisableReadDepthWidgets()));
     connect(ui->basePairsPerSegmentManualRadioButton, SIGNAL(toggled(bool)), this, SLOT(basePairsPerSegmentManualChanged()));
     connect(ui->readDepthPowerSpinBox, SIGNAL(valueChanged(double)), this, SLOT(updateNodeWidthVisualAid()));
     connect(ui->readDepthEffectOnWidthSpinBox, SIGNAL(valueChanged(double)), this, SLOT(updateNodeWidthVisualAid()));
@@ -86,9 +88,11 @@ SettingsDialog::~SettingsDialog()
 void setOneSettingFromWidget(double * setting, QDoubleSpinBox * widget, bool percentage) {*setting = widget->value() / (percentage ? 100.0 : 1.0);}
 void setOneSettingFromWidget(int * setting, QSpinBox * widget) {*setting = widget->value();}
 void setOneSettingFromWidget(QColor * setting, ColourButton * widget) {*setting = widget->m_colour;}
+void setOneSettingFromWidget(SciNot * setting, QDoubleSpinBox * coefficientWidget, QSpinBox * exponentWidget) {*setting = SciNot(coefficientWidget->value(), exponentWidget->value());}
 void setOneWidgetFromSetting(double * setting, QDoubleSpinBox * widget, bool percentage) {widget->setValue(*setting * (percentage ? 100.0 : 1.0));}
 void setOneWidgetFromSetting(int * setting, QSpinBox * widget) {widget->setValue(*setting);}
 void setOneWidgetFromSetting(QColor * setting, ColourButton * widget) {widget->setColour(*setting);}
+void setOneWidgetFromSetting(SciNot * setting, QDoubleSpinBox * coefficientWidget, QSpinBox * exponentWidget) {coefficientWidget->setValue(setting->getCoefficient()); exponentWidget->setValue(setting->getExponent());}
 
 
 
@@ -96,7 +100,7 @@ void SettingsDialog::setWidgetsFromSettings()
 {
     loadOrSaveSettingsToOrFromWidgets(true, g_settings.data());
 
-    enableDisableReadDepthValueSpinBoxes();
+    enableDisableReadDepthWidgets();
 }
 
 
@@ -116,18 +120,21 @@ void SettingsDialog::loadOrSaveSettingsToOrFromWidgets(bool setWidgets, Settings
     void (*doubleFunctionPointer)(double *, QDoubleSpinBox *, bool);
     void (*intFunctionPointer)(int *, QSpinBox *);
     void (*colourFunctionPointer)(QColor *, ColourButton *);
+    void (*sciNotFunctionPointer)(SciNot *, QDoubleSpinBox *, QSpinBox *);
 
     if (setWidgets)
     {
         doubleFunctionPointer = setOneWidgetFromSetting;
         intFunctionPointer = setOneWidgetFromSetting;
         colourFunctionPointer = setOneWidgetFromSetting;
+        sciNotFunctionPointer = setOneWidgetFromSetting;
     }
     else
     {
         doubleFunctionPointer = setOneSettingFromWidget;
         intFunctionPointer = setOneSettingFromWidget;
         colourFunctionPointer = setOneSettingFromWidget;
+        sciNotFunctionPointer = setOneSettingFromWidget;
     }
 
     intFunctionPointer(&settings->manualBasePairsPerSegment, ui->basePairsPerSegmentSpinBox);
@@ -166,7 +173,7 @@ void SettingsDialog::loadOrSaveSettingsToOrFromWidgets(bool setWidgets, Settings
     doubleFunctionPointer(&settings->minQueryCoveredByHits, ui->minQueryCoveredByHitsSpinBox, true);
     doubleFunctionPointer(&settings->minMeanHitIdentity, ui->minMeanHitIdentitySpinBox, true);
     doubleFunctionPointer(&settings->maxLengthDiscrepancy, ui->maxLengthDiscrepancySpinBox, true);
-    intFunctionPointer(&settings->maxEValueProductPower, ui->maxEvalueProductSpinBox);
+    sciNotFunctionPointer(&settings->maxEValueProduct, ui->maxEValueCoefficientSpinBox, ui->maxEValueExponentSpinBox);
 
     //A couple of settings are not in a spin box, so they
     //have to be done manually, not with those function pointers.
@@ -178,7 +185,9 @@ void SettingsDialog::loadOrSaveSettingsToOrFromWidgets(bool setWidgets, Settings
         ui->readDepthValueAutoRadioButton->setChecked(settings->autoReadDepthValue);
         ui->readDepthValueManualRadioButton->setChecked(!settings->autoReadDepthValue);
         basePairsPerSegmentManualChanged();
-        ui->basePairsPerSegmentAutoLabel->setText(QString::number(settings->autoBasePairsPerSegment));
+        ui->basePairsPerSegmentAutoLabel->setText(formatIntForDisplay(settings->autoBasePairsPerSegment));
+        ui->lowReadDepthAutoValueLabel2->setText(formatDoubleForDisplay(g_assemblyGraph->m_firstQuartileReadDepth, 2));
+        ui->highReadDepthAutoValueLabel2->setText(formatDoubleForDisplay(g_assemblyGraph->m_thirdQuartileReadDepth, 2));
         ui->basePairsPerSegmentAutoRadioButton->setChecked(settings->nodeLengthMode == AUTO_NODE_LENGTH);
         ui->basePairsPerSegmentManualRadioButton->setChecked(settings->nodeLengthMode != AUTO_NODE_LENGTH);
         ui->positionVisibleRadioButton->setChecked(!settings->positionTextNodeCentre);
@@ -307,9 +316,9 @@ void SettingsDialog::setInfoTexts()
                                                 "nodes with read depth above the high read depth value.<br><br>"
                                                 "Nodes with read depth between the low and high read depth values will get an "
                                                 "intermediate colour.");
-    ui->readDepthValuesInfoText->setInfoText("When set to 'Auto', the low read depth value is set to the first quartile and the high "
-                                            "read depth value is set to the third quartile.<br><br>"
-                                            "When set to 'Manual', you can specify the values used for read depth colouring.");
+    ui->readDepthAutoValuesInfoText->setInfoText("When set to 'Auto', the low read depth value is set to the first quartile and the high "
+                                                 "read depth value is set to the third quartile.");
+    ui->readDepthManualValuesInfoText->setInfoText("When set to 'Manual', you can specify the values used for read depth colouring.");
     ui->noBlastHitsColourInfoText->setInfoText("When Bandage is set to the 'Colour using BLAST hits' option, this colour is "
                                                "used for nodes that do not have any BLAST hits. It is also used for any region "
                                                "of a node without BLAST hits, even if there are BLAST hits in other regions of "
@@ -368,14 +377,12 @@ void SettingsDialog::setInfoTexts()
 }
 
 
-void SettingsDialog::enableDisableReadDepthValueSpinBoxes()
+void SettingsDialog::enableDisableReadDepthWidgets()
 {
-    bool enable = ui->readDepthValueManualRadioButton->isChecked();
+    bool manual = ui->readDepthValueManualRadioButton->isChecked();
 
-    ui->lowReadDepthValueLabel->setEnabled(enable);
-    ui->highReadDepthValueLabel->setEnabled(enable);
-    ui->lowReadDepthValueSpinBox->setEnabled(enable);
-    ui->highReadDepthValueSpinBox->setEnabled(enable);
+    ui->readDepthManualWidget->setEnabled(manual);
+    ui->readDepthAutoWidget->setEnabled(!manual);
 }
 
 

@@ -4,7 +4,7 @@ Bandage is a GUI program that allows users to interact with the assembly graphs 
 
 *De novo* assembly graphs contain assembled contigs (nodes) but also the connections between those contigs (edges), which are not easily accessible to users. Bandage visualises assembly graphs, with connections, using graph layout algorithms. Nodes in the drawn graph, which represent contigs, can be automatically labelled with their ID, length or depth. Users can interact with the graph by moving, labelling and colouring nodes. Sequence information can also be extracted directly from the graph viewer. By displaying connections between contigs, Bandage opens up new possibilities for analysing *de novo* assemblies that are not possible by looking at contigs alone.
 
-More information and screenshots are on the Bandage website: <a href="http://rrwick.github.io/Bandage/" target="_blank">rrwick.github.io/Bandage</a>
+More information and download links are on the Bandage website: <a href="http://rrwick.github.io/Bandage/" target="_blank">rrwick.github.io/Bandage</a>
 
 ## Help
 
@@ -73,35 +73,39 @@ Building Bandage in Windows is more challenging than in Linux or OS X, but it ca
 
 ## History
 
-Version 0.6.3 - improvements to BLAST functionality
+v0.7.0 - graph editing capabilities
 
-Version 0.6.2 - new features for working with graph paths
+v0.6.4 - improvements to BLAST and main GUI
 
-Version 0.6.1 - improvements to BLAST functionality
+v0.6.3 - improvements to BLAST functionality
 
-Version 0.6.0 - new features, including command line functionality
+v0.6.2 - new features for working with graph paths
 
-Version 0.5.6 - bug fixes
+v0.6.1 - improvements to BLAST functionality
 
-Version 0.5.5 - bug fixes
+v0.6.0 - new features, including command line functionality
 
-Version 0.5.4 - bug fixes
+v0.5.6 - bug fixes
 
-Version 0.5.3 - bug fixes
+v0.5.5 - bug fixes
 
-Version 0.5.2 - performance improvements
+v0.5.4 - bug fixes
 
-Version 0.5.1 - bug fixes
+v0.5.3 - bug fixes
 
-Version 0.5.0 - new features, including Trinity support
+v0.5.2 - performance improvements
 
-Version 0.4.2 - bug fixes
+v0.5.1 - bug fixes
 
-Version 0.4.1 - bug fixes
+v0.5.0 - new features, including Trinity support
 
-Version 0.4.0 - new features, including BLAST integration
+v0.4.2 - bug fixes
 
-Version 0.3.0 – initial release on GitHub
+v0.4.1 - bug fixes
+
+v0.4.0 - new features, including BLAST integration
+
+v0.3.0 – initial release on GitHub
 
 ## Contributing
 

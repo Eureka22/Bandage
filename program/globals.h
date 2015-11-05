@@ -32,15 +32,17 @@ class MyGraphicsView;
 class BlastSearch;
 class AssemblyGraph;
 
-enum NodeColourScheme {ONE_COLOUR, RANDOM_COLOURS, READ_DEPTH_COLOUR,
+enum NodeColourScheme {UNIFORM_COLOURS, RANDOM_COLOURS, READ_DEPTH_COLOUR,
                        BLAST_HITS_RAINBOW_COLOUR, BLAST_HITS_SOLID_COLOUR,
                        CONTIGUITY_COLOUR, BARCODE_COLOR, CUSTOM_COLOURS};
-enum GraphScope {WHOLE_GRAPH, AROUND_NODE, AROUND_BLAST_HITS};
+
+enum GraphScope {WHOLE_GRAPH, AROUND_NODE, AROUND_BLAST_HITS, READ_DEPTH_RANGE};
+
 enum ContiguityStatus {STARTING, CONTIGUOUS_STRAND_SPECIFIC,
                        CONTIGUOUS_EITHER_STRAND, MAYBE_CONTIGUOUS,
                        NOT_CONTIGUOUS};
 enum NodeDragging {ONE_PIECE, NEARBY_PIECES, ALL_PIECES};
-enum ZoomSource {MOUSE_WHEEL, SPIN_BOX, KEYBOARD};
+enum ZoomSource {MOUSE_WHEEL, SPIN_BOX, KEYBOARD, GESTURE};
 enum UiState {NO_GRAPH_LOADED, GRAPH_LOADED, GRAPH_DRAWN};
 enum NodeLengthMode {AUTO_NODE_LENGTH, MANUAL_NODE_LENGTH};
 enum GraphFileType {LAST_GRAPH, FASTG, GFA, TRINITY, FASTG_BC, ANY_FILE_TYPE,
@@ -54,6 +56,9 @@ enum CommandLineCommand {NO_COMMAND, BANDAGE_LOAD, BANDAGE_IMAGE,
                          BANDAGE_DISTANCE};
 enum EdgeOverlapType {UNKNOWN_OVERLAP, EXACT_OVERLAP,
                       AUTO_DETERMINED_EXACT_OVERLAP};
+enum NodeNameStatus {NODE_NAME_OKAY, NODE_NAME_TAKEN, NODE_NAME_CONTAINS_TAB,
+                     NODE_NAME_CONTAINS_NEWLINE, NODE_NAME_CONTAINS_COMMA,
+                     NODE_NAME_CONTAINS_SPACE};
 
 
 //Some of the program's common components are made global so they don't have
@@ -72,9 +77,6 @@ extern QSharedPointer<BarcodeManager> g_barcode_manager;
 QString formatIntForDisplay(int num);
 QString formatIntForDisplay(long long num);
 QString formatDoubleForDisplay(double num, int decimalPlacesToDisplay);
-
-
-//The following are used as
 
 
 #endif // GLOBALS_H

@@ -24,7 +24,7 @@
 int bandageContiguous(QStringList arguments)
 {
     QTextStream out(stdout);
-    QTextStream err(stdout);
+    QTextStream err(stderr);
 
     if (checkForHelp(arguments))
     {
@@ -66,8 +66,12 @@ int bandageContiguous(QStringList arguments)
 void printContiguousUsage(QTextStream * out)
 {
     *out << endl;
-    *out << "Usage:   Bandage contiguous <graph> <target> [options]" << endl << endl;
-    *out << "Options: " << endl << endl;
+    *out << "Usage:   Bandage contiguous <graph> <target> [options]" << endl;
+    *out << endl;
+    *out << "Options: " << endl;
+    *out << endl;
+    *out << "Online Bandage help: https://github.com/rrwick/Bandage/wiki" << endl;
+    *out << endl;
 }
 
 

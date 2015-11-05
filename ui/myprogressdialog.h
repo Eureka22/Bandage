@@ -31,13 +31,22 @@ class MyProgressDialog : public QDialog
     Q_OBJECT
 
 public:
+    //CREATORS
     explicit MyProgressDialog(QWidget * parent, QString message, bool showCancelButton,
                               QString cancelButtonText = "", QString cancelMessage = "", QString cancelInfoText = "");
     ~MyProgressDialog();
 
+    //ACCESSORS
+    bool wasCancelled() const {return m_cancelled;}
+
+public slots:
+    void setMaxValue(int max);
+    void setValue(int value);
+
 private:
     Ui::MyProgressDialog *ui;
     QString m_cancelMessage;
+    bool m_cancelled;
 
 private slots:
     void cancel();

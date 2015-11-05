@@ -77,8 +77,11 @@ SOURCES += \
     graph/barcode.cpp \
     graph/barcodepart.cpp \
     graph/barcodemanager.cpp \
-    graph/barcodesetting.cpp
-
+    graph/barcodesetting.cpp \
+    ui/blasthitfiltersdialog.cpp \
+    program/scinot.cpp \
+    ui/changenodenamedialog.cpp \
+    ui/changenodereaddepthdialog.cpp
 HEADERS  += \
     program/settings.h \
     program/globals.h \
@@ -129,7 +132,11 @@ HEADERS  += \
     graph/barcode.h \
     graph/barcodepart.h \
     graph/barcodemanager.h \
-    graph/barcodesetting.h
+    graph/barcodesetting.h \
+    ui/blasthitfiltersdialog.h \
+    program/scinot.h \
+    ui/changenodenamedialog.h \
+    ui/changenodereaddepthdialog.h
 
 FORMS    += \
     ui/mainwindow.ui \
@@ -139,7 +146,10 @@ FORMS    += \
     ui/blastsearchdialog.ui \
     ui/myprogressdialog.ui \
     ui/pathspecifydialog.ui \
-    ui/querypathsdialog.ui
+    ui/querypathsdialog.ui \
+    ui/blasthitfiltersdialog.ui \
+    ui/changenodenamedialog.ui \
+    ui/changenodereaddepthdialog.ui
 
 
 # These includes are configured assuming that the OGDF

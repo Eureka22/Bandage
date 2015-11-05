@@ -262,8 +262,11 @@
               <property name="rightMargin">
                <number>0</number>
               </property>
-              <item row="0" column="0">
-               <widget class="InfoTextWidget" name="graphScopeInfoText" native="true">
+              <item row="2" column="0">
+               <widget class="InfoTextWidget" name="startingNodesMatchTypeInfoText" native="true">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -276,44 +279,6 @@
                   <height>16</height>
                  </size>
                 </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QLabel" name="graphScopeLabel">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Scope:</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="2">
-               <widget class="QComboBox" name="graphScopeComboBox">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <item>
-                 <property name="text">
-                  <string>Entire graph</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>Around nodes</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>Around BLAST hits</string>
-                 </property>
-                </item>
                </widget>
               </item>
               <item row="1" column="0">
@@ -335,40 +300,8 @@
                 </property>
                </widget>
               </item>
-              <item row="1" column="1">
-               <widget class="QLabel" name="startingNodesLabel">
-                <property name="enabled">
-                 <bool>true</bool>
-                </property>
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Node(s):</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="2">
-               <widget class="QLineEdit" name="startingNodesLineEdit">
-                <property name="enabled">
-                 <bool>true</bool>
-                </property>
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
-               <widget class="InfoTextWidget" name="startingNodesMatchTypeInfoText" native="true">
-                <property name="enabled">
-                 <bool>true</bool>
-                </property>
+              <item row="0" column="0">
+               <widget class="InfoTextWidget" name="graphScopeInfoText" native="true">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -380,22 +313,6 @@
                   <width>16</width>
                   <height>16</height>
                  </size>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="1">
-               <widget class="QLabel" name="startingNodesMatchTypeLabel">
-                <property name="enabled">
-                 <bool>true</bool>
-                </property>
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Match:</string>
                 </property>
                </widget>
               </item>
@@ -468,36 +385,7 @@
                 </property>
                </widget>
               </item>
-              <item row="3" column="1">
-               <widget class="QLabel" name="nodeDistanceLabel">
-                <property name="enabled">
-                 <bool>true</bool>
-                </property>
-                <property name="text">
-                 <string>Distance:</string>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="2">
-               <widget class="QSpinBox" name="nodeDistanceSpinBox">
-                <property name="enabled">
-                 <bool>true</bool>
-                </property>
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-                <property name="maximum">
-                 <number>10000</number>
-                </property>
-               </widget>
-              </item>
-              <item row="4" column="0">
+              <item row="6" column="0">
                <widget class="InfoTextWidget" name="nodeStyleInfoText" native="true">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -513,20 +401,7 @@
                 </property>
                </widget>
               </item>
-              <item row="4" column="1">
-               <widget class="QLabel" name="nodeStyleLabel">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Style:</string>
-                </property>
-               </widget>
-              </item>
-              <item row="4" column="2">
+              <item row="6" column="2">
                <widget class="QWidget" name="nodeStyleWidget" native="true">
                 <layout class="QHBoxLayout" name="horizontalLayout_6">
                  <property name="spacing">
@@ -576,7 +451,173 @@
                 </layout>
                </widget>
               </item>
-              <item row="5" column="0">
+              <item row="9" column="1" colspan="2">
+               <widget class="QPushButton" name="drawGraphButton">
+                <property name="text">
+                 <string>Draw graph</string>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="1">
+               <widget class="QLabel" name="nodeStyleLabel">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Style:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="2">
+               <widget class="QSpinBox" name="nodeDistanceSpinBox">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+                <property name="maximum">
+                 <number>10000</number>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLabel" name="startingNodesLabel">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Node(s):</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="2">
+               <widget class="QLineEdit" name="startingNodesLineEdit">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QComboBox" name="graphScopeComboBox">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <item>
+                 <property name="text">
+                  <string>Entire graph</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Around nodes</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Around BLAST hits</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Read depth range</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLabel" name="graphScopeLabel">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Scope:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QLabel" name="nodeDistanceLabel">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="text">
+                 <string>Distance:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QLabel" name="startingNodesMatchTypeLabel">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Match:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="2">
+               <widget class="QDoubleSpinBox" name="minReadDepthSpinBox">
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+                <property name="decimals">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <double>1000000.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0">
+               <widget class="InfoTextWidget" name="minReadDepthInfoText" native="true">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>16</width>
+                  <height>16</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="9" column="0">
                <widget class="InfoTextWidget" name="drawGraphInfoText" native="true">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -592,10 +633,58 @@
                 </property>
                </widget>
               </item>
-              <item row="5" column="1" colspan="2">
-               <widget class="QPushButton" name="drawGraphButton">
+              <item row="4" column="1">
+               <widget class="QLabel" name="minReadDepthLabel">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
-                 <string>Draw graph</string>
+                 <string>Min:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="0">
+               <widget class="InfoTextWidget" name="maxReadDepthInfoText" native="true">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>16</width>
+                  <height>16</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="1">
+               <widget class="QLabel" name="maxReadDepthLabel">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Max:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="2">
+               <widget class="QDoubleSpinBox" name="maxReadDepthSpinBox">
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+                <property name="decimals">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <double>1000000.000000000000000</double>
                 </property>
                </widget>
               </item>
@@ -1032,10 +1121,24 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="2" column="0" colspan="2">
+                 <item row="3" column="0">
                   <widget class="QCheckBox" name="blastHitsCheckBox">
                    <property name="text">
                     <string>BLAST hits</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="4" column="1">
+                  <widget class="QComboBox" name="csvComboBox">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="3" column="1">
+                  <widget class="QCheckBox" name="csvCheckBox">
+                   <property name="text">
+                    <string>CSV data:</string>
                    </property>
                   </widget>
                  </item>
@@ -1407,20 +1510,38 @@
          </widget>
         </item>
         <item>
-         <spacer name="selectedNodesSpacer">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeType">
-           <enum>QSizePolicy::Fixed</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>60</height>
-           </size>
-          </property>
-         </spacer>
+         <widget class="QWidget" name="selectedNodesSpacerWidget" native="true">
+          <layout class="QVBoxLayout" name="verticalLayout_5">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <spacer name="selectedNodesSpacer">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Fixed</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>60</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
         </item>
         <item>
          <widget class="QLabel" name="selectedNodesTitleLabel">
@@ -1471,6 +1592,22 @@
           </property>
           <property name="text">
            <string>Total length:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="selectedNodesDepthLabel">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Mean read depth:</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -1535,50 +1672,42 @@
              </property>
             </widget>
            </item>
-           <item row="1" column="0">
-            <widget class="InfoTextWidget" name="removeNodesInfoText" native="true">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>16</width>
-               <height>16</height>
-              </size>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1" colspan="2">
-            <widget class="QPushButton" name="removeNodeButton">
-             <property name="toolTip">
-              <string>Delete</string>
-             </property>
-             <property name="text">
-              <string>Remove nodes</string>
-             </property>
-            </widget>
-           </item>
           </layout>
          </widget>
         </item>
         <item>
-         <spacer name="selectedEdgesSpacer">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeType">
-           <enum>QSizePolicy::Fixed</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>60</height>
-           </size>
-          </property>
-         </spacer>
+         <widget class="QWidget" name="selectedEdgesSpacerWidget" native="true">
+          <layout class="QVBoxLayout" name="verticalLayout_6">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <spacer name="selectedEdgesSpacer">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Fixed</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>60</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
         </item>
         <item>
          <widget class="QLabel" name="selectedEdgesTitleLabel">
@@ -1738,6 +1867,7 @@
      <string>File</string>
     </property>
     <addaction name="actionLoad_graph"/>
+    <addaction name="actionLoad_CSV"/>
     <addaction name="separator"/>
     <addaction name="actionSave_image_current_view"/>
     <addaction name="actionSave_image_entire_scene"/>
@@ -1788,7 +1918,7 @@
      <string>Help</string>
     </property>
     <addaction name="actionAbout"/>
-    <addaction name="actionBandage_website"/>
+    <addaction name="actionBandage_online_help"/>
    </widget>
    <widget class="QMenu" name="menuOutput">
     <property name="title">
@@ -1800,8 +1930,31 @@
     <addaction name="actionCopy_selected_node_path_to_clipboard"/>
     <addaction name="actionSave_selected_node_path_to_FASTA"/>
     <addaction name="actionSpecify_exact_path_for_copy_save"/>
+    <addaction name="separator"/>
+    <addaction name="actionSave_entire_graph_to_GFA"/>
+    <addaction name="actionSave_visible_graph_to_GFA"/>
+    <addaction name="separator"/>
+    <addaction name="actionSave_entire_graph_to_FASTA"/>
+    <addaction name="actionSave_entire_graph_to_FASTA_only_positive_nodes"/>
+    <addaction name="separator"/>
+    <addaction name="actionWeb_BLAST_selected_nodes"/>
+   </widget>
+   <widget class="QMenu" name="menuManipulate">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionHide_selected_nodes"/>
+    <addaction name="separator"/>
+    <addaction name="actionRemove_selection_from_graph"/>
+    <addaction name="actionDuplicate_selected_nodes"/>
+    <addaction name="actionMerge_selected_nodes"/>
+    <addaction name="actionMerge_all_possible_nodes"/>
+    <addaction name="separator"/>
+    <addaction name="actionChange_node_name"/>
+    <addaction name="actionChange_node_read_depth"/>
    </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuManipulate"/>
    <addaction name="menuTools"/>
    <addaction name="menuView"/>
    <addaction name="menuSelection"/>
@@ -1816,6 +1969,9 @@
    </property>
    <property name="text">
     <string>Load graph</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
    </property>
   </action>
   <action name="actionSave_image_current_view">
@@ -1939,10 +2095,10 @@
      <normaloff>:/icons/copy.png</normaloff>:/icons/copy.png</iconset>
    </property>
    <property name="text">
-    <string>Copy node sequences to clipboard</string>
+    <string>Copy selected node sequences to clipboard</string>
    </property>
    <property name="toolTip">
-    <string>Copy node sequences to clipboard</string>
+    <string>Copy selected node sequences to clipboard</string>
    </property>
   </action>
   <action name="actionSave_selected_node_sequences_to_FASTA">
@@ -1951,10 +2107,10 @@
      <normaloff>:/icons/save-256.png</normaloff>:/icons/save-256.png</iconset>
    </property>
    <property name="text">
-    <string>Save node sequences to FASTA</string>
+    <string>Save selected node sequences to FASTA</string>
    </property>
    <property name="toolTip">
-    <string>Save node sequences to FASTA</string>
+    <string>Save selected node sequences to FASTA</string>
    </property>
   </action>
   <action name="actionSelect_none">
@@ -2002,13 +2158,16 @@
     <string>Select not contiguous nodes</string>
    </property>
   </action>
-  <action name="actionBandage_website">
+  <action name="actionBandage_online_help">
    <property name="icon">
     <iconset resource="../images/images.qrc">
      <normaloff>:/icons/icon.png</normaloff>:/icons/icon.png</iconset>
    </property>
    <property name="text">
-    <string>Bandage website</string>
+    <string>Bandage online help</string>
+   </property>
+   <property name="toolTip">
+    <string>Bandage online help</string>
    </property>
   </action>
   <action name="actionCopy_selected_node_path_to_clipboard">
@@ -2017,7 +2176,10 @@
      <normaloff>:/icons/copy.png</normaloff>:/icons/copy.png</iconset>
    </property>
    <property name="text">
-    <string>Copy node path sequence to clipboard</string>
+    <string>Copy selected path sequence to clipboard</string>
+   </property>
+   <property name="toolTip">
+    <string>Copy selected path sequence to clipboard</string>
    </property>
   </action>
   <action name="actionSave_selected_node_path_to_FASTA">
@@ -2026,7 +2188,10 @@
      <normaloff>:/icons/save-256.png</normaloff>:/icons/save-256.png</iconset>
    </property>
    <property name="text">
-    <string>Save node path sequence to FASTA</string>
+    <string>Save selected path sequence to FASTA</string>
+   </property>
+   <property name="toolTip">
+    <string>Save selected path sequence to FASTA</string>
    </property>
   </action>
   <action name="actionSpecify_exact_path_for_copy_save">
@@ -2036,6 +2201,113 @@
    </property>
    <property name="text">
     <string>Specify exact path for copy/save</string>
+   </property>
+  </action>
+  <action name="actionLoad_CSV">
+   <property name="icon">
+    <iconset resource="../images/images.qrc">
+     <normaloff>:/icons/load-256.png</normaloff>:/icons/load-256.png</iconset>
+   </property>
+   <property name="text">
+    <string>Load CSV label data</string>
+   </property>
+   <property name="toolTip">
+    <string>Load CSV label data</string>
+   </property>
+  </action>
+  <action name="actionSave_entire_graph_to_FASTA">
+   <property name="icon">
+    <iconset resource="../images/images.qrc">
+     <normaloff>:/icons/save-256.png</normaloff>:/icons/save-256.png</iconset>
+   </property>
+   <property name="text">
+    <string>Save entire graph to FASTA (both positive and negative nodes)</string>
+   </property>
+  </action>
+  <action name="actionSave_entire_graph_to_FASTA_only_positive_nodes">
+   <property name="icon">
+    <iconset resource="../images/images.qrc">
+     <normaloff>:/icons/save-256.png</normaloff>:/icons/save-256.png</iconset>
+   </property>
+   <property name="text">
+    <string>Save entire graph to FASTA (only positive nodes)</string>
+   </property>
+  </action>
+  <action name="actionWeb_BLAST_selected_nodes">
+   <property name="icon">
+    <iconset resource="../images/images.qrc">
+     <normaloff>:/icons/ncbi-256.png</normaloff>:/icons/ncbi-256.png</iconset>
+   </property>
+   <property name="text">
+    <string>Web BLAST selected nodes</string>
+   </property>
+  </action>
+  <action name="actionHide_selected_nodes">
+   <property name="text">
+    <string>Hide selected nodes</string>
+   </property>
+   <property name="shortcut">
+    <string>Del</string>
+   </property>
+  </action>
+  <action name="actionRemove_selection_from_graph">
+   <property name="text">
+    <string>Remove selection from graph</string>
+   </property>
+   <property name="shortcut">
+    <string>Shift+Del</string>
+   </property>
+  </action>
+  <action name="actionDuplicate_selected_nodes">
+   <property name="text">
+    <string>Duplicate selected nodes</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+D</string>
+   </property>
+  </action>
+  <action name="actionMerge_selected_nodes">
+   <property name="text">
+    <string>Merge selected nodes</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+M</string>
+   </property>
+  </action>
+  <action name="actionMerge_all_possible_nodes">
+   <property name="text">
+    <string>Merge all possible nodes</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+M</string>
+   </property>
+  </action>
+  <action name="actionSave_entire_graph_to_GFA">
+   <property name="icon">
+    <iconset resource="../images/images.qrc">
+     <normaloff>:/icons/save-256.png</normaloff>:/icons/save-256.png</iconset>
+   </property>
+   <property name="text">
+    <string>Save entire graph to GFA</string>
+   </property>
+  </action>
+  <action name="actionSave_visible_graph_to_GFA">
+   <property name="icon">
+    <iconset resource="../images/images.qrc">
+     <normaloff>:/icons/save-256.png</normaloff>:/icons/save-256.png</iconset>
+   </property>
+   <property name="text">
+    <string>Save visible graph to GFA</string>
+   </property>
+  </action>
+  <action name="actionChange_node_name">
+   <property name="text">
+    <string>Change node name</string>
+   </property>
+  </action>
+  <action name="actionChange_node_read_depth">
+   <property name="text">
+    <string>Change node read depth</string>
    </property>
   </action>
  </widget>
@@ -2085,7 +2357,6 @@
   <tabstop>selectedNodesTextEdit</tabstop>
   <tabstop>setNodeCustomColourButton</tabstop>
   <tabstop>setNodeCustomLabelButton</tabstop>
-  <tabstop>removeNodeButton</tabstop>
   <tabstop>selectedEdgesTextEdit</tabstop>
  </tabstops>
  <resources>

@@ -135,10 +135,7 @@ void MyGraphicsView::keyPressEvent(QKeyEvent * event)
             event->key() == Qt::Key_Plus)
     {
         if (shiftPressed)
-        {
-            rotate(1.0);
-            m_rotation += 1.0;
-        }
+            changeRotation(1.0);
         else
             angle = 120;
     }
@@ -150,10 +147,7 @@ void MyGraphicsView::keyPressEvent(QKeyEvent * event)
              event->key() == Qt::Key_Underscore)
     {
         if (shiftPressed)
-        {
-            rotate(-1.0);
-            m_rotation -= 1.0;
-        }
+            changeRotation(-1.0);
         else
             angle = -120;
     }
@@ -161,8 +155,8 @@ void MyGraphicsView::keyPressEvent(QKeyEvent * event)
     //Actually change the zoom now, if appropriate.
     if (angle != 0)
     {
-        double factor = qPow(m_zoom->_zoom_factor_base, angle);
-        m_zoom->gentle_zoom(factor, KEYBOARD);
+        double factor = qPow(m_zoom->m_zoomFactorBase, angle);
+        m_zoom->gentleZoom(factor, KEYBOARD);
     }
 
     //The event press event handling of QGraphicsView will take care of using
@@ -243,4 +237,23 @@ void MyGraphicsView::getFourViewportCornersInSceneCoordinates(QPointF * c1, QPoi
     *c1 = mapToScene(QPoint(0, 0));
     *c2 = mapToScene(QPoint(viewport()->width(), 0));
     *c3 = mapToScene(QPoint(viewport()->width(), viewport()->height()));
-    *c4 = mapToScene(QPoint(0, viewport()->height()));}
+    *c4 = mapToScene(QPoint(0, viewport()->height()));
+}
+
+void MyGraphicsView::setRotation(double newRotation)
+{
+    undoRotation();
+    changeRotation(newRotation);
+}
+
+void MyGraphicsView::changeRotation(double rotationChange)
+{
+    rotate(rotationChange);
+    m_rotation += rotationChange;
+}
+
+void MyGraphicsView::undoRotation()
+{
+    rotate(-g_graphicsView->m_rotation);
+    m_rotation = 0.0;
+}

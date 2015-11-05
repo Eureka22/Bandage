@@ -24,6 +24,7 @@
 #include "globals.h"
 #include <QString>
 #include "../graph/path.h"
+#include "scinot.h"
 
 class DeBruijnNode;
 
@@ -70,6 +71,8 @@ public:
     bool displayNodeNames;
     bool displayNodeLengths;
     bool displayNodeReadDepth;
+    bool displayNodeCsvData;
+    int  displayNodeCsvDataCol;
     bool displayBlastHits;
     QFont labelFont;
     bool textOutline;
@@ -126,11 +129,28 @@ public:
     double minQueryCoveredByHits;
     double minMeanHitIdentity;
     double maxLengthDiscrepancy;
-    int maxEValueProductPower;
+    SciNot maxEValueProduct;
 
     //This holds the BLAST search parameters that a user can change before
     //running a BLAST search.
     QString blastSearchParameters;
+
+    //These are the optional BLAST hit filters: whether or not they are used and
+    //what their values are.
+    bool blastAlignmentLengthFilterOn;
+    int blastAlignmentLengthFilterValue;
+    bool blastQueryCoverageFilterOn;
+    double blastQueryCoverageFilterValue;
+    bool blastIdentityFilterOn;
+    double blastIdentityFilterValue;
+    bool blastEValueFilterOn;
+    SciNot blastEValueFilterValue;
+    bool blastBitScoreFilterOn;
+    double blastBitScoreFilterValue;
+
+    //These are used for the 'Read depth range' graph scope.
+    double minReadDepthRange;
+    double maxReadDepthRange;
 };
 
 #endif // SETTINGS_H

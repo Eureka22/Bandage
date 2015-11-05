@@ -25,6 +25,7 @@
 #include <QString>
 #include <QList>
 #include <QSharedPointer>
+#include "../program/scinot.h"
 
 //This is a class to hold all BLAST search related stuff.
 //An instance of it is made available to the whole program
@@ -49,7 +50,7 @@ public:
     void cleanUp();
     void buildHitsFromBlastOutput();
     void findQueryPaths();
-    QString getNodeNameFromString(QString nodeString);
+    static QString getNodeNameFromString(QString nodeString);
     bool findProgram(QString programName, QString * command);
     void clearSomeQueries(std::vector<BlastQuery *> queriesToRemove);
     void emptyTempDirectory();

@@ -41,16 +41,23 @@ public:
 
     //ACCESSORS
     QString getName() const {return m_name;}
+    QString getNameWithoutSign() const {return m_name.left(m_name.length() - 1);}
+    QString getSign() const {if (m_name.length() > 0) return m_name.right(1); else return "+";}
     double getReadDepth() const {return m_readDepth;}
     double getReadDepthRelativeToMeanDrawnReadDepth() const {return m_readDepthRelativeToMeanDrawnReadDepth;}
     QByteArray getSequence() const {return m_sequence;}
     int getLength() const {return m_sequence.length();}
+    QByteArray getFullSequence() const;
+    int getFullLength() const;
     QByteArray getFasta() const;
+    QByteArray getFastaNoNewLinesInSequence() const;
+    QByteArray getGfaSegmentLine() const;
     char getBaseAt(int i) const {if (i >= 0 && i < m_sequence.length()) return m_sequence.at(i); else return '\0';}
     ContiguityStatus getContiguityStatus() const {return m_contiguityStatus;}
     DeBruijnNode * getReverseComplement() const {return m_reverseComplement;}
     OgdfNode * getOgdfNode() const {return m_ogdfNode;}
     GraphicsItemNode * getGraphicsItemNode() const {return m_graphicsItemNode;}
+    bool thisOrReverseComplementHasGraphicsItemNode() const {return (m_graphicsItemNode != 0 || getReverseComplement()->m_graphicsItemNode != 0);}
     bool hasGraphicsItem() const {return m_graphicsItemNode != 0;}
     const std::vector<DeBruijnEdge *> * getEdgesPointer() const {return &m_edges;}
     std::vector<DeBruijnEdge *> getEnteringEdges() const;
@@ -84,6 +91,10 @@ public:
     std::vector<BlastHitPart> getBlastHitPartsForThisNodeOrReverseComplement(double scaledNodeLength) const;
     std::vector<BarcodePart> getBarcodePartsForThisNodeOrReverseComplement(double scaledNodeLength) const;
 
+    bool hasCsvData() const {return !m_csvData.isEmpty();}
+    QStringList getAllCsvData() const {return m_csvData;}
+    QString getCsvLine(int i) const {if (i < m_csvData.length()) return m_csvData[i]; else return "";}
+    bool isInReadDepthRange(double min, double max) const;
 
     //MODIFERS
     void setReadDepthRelativeToMeanDrawnReadDepth(double newVal) {m_readDepthRelativeToMeanDrawnReadDepth = newVal;}
@@ -100,12 +111,17 @@ public:
     void setCustomLabel(QString newLabel) {m_customLabel = newLabel;}
     void resetNode();
     void addEdge(DeBruijnEdge * edge);
+    void removeEdge(DeBruijnEdge * edge);
     void addToOgdfGraph(ogdf::Graph * ogdfGraph);
     void determineContiguity();
     void clearBlastHits() {m_blastHits.clear();}
     void addBlastHit(BlastHit * newHit) {m_blastHits.push_back(newHit);}
     void labelNeighbouringNodesAsDrawn(int nodeDistance, DeBruijnNode * callingNode);
     void addBarcode(Barcode * bc) { m_barcodes.push_back(bc) ;}
+    void setCsvData(QStringList csvData) {m_csvData = csvData;}
+    void clearCsvData() {m_csvData.clear();}
+    void setReadDepth(double newReadDepth) {m_readDepth = newReadDepth;}
+    void setName(QString newName) {m_name = newName;}
 
 private:
     QString m_name;
@@ -123,6 +139,9 @@ private:
     QColor m_customColour;
     QString m_customLabel;
     std::vector<BlastHit *> m_blastHits;
+    QStringList m_csvData;
+    QString getNodeNameForFasta() const;
+    QByteArray getUpstreamSequence(int upstreamSequenceLength) const;
 
     std::vector<Barcode *> m_barcodes;
 
