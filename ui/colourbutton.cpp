@@ -29,7 +29,6 @@ ColourButton::ColourButton(QWidget * parent) :
 void ColourButton::setColour(QColor newColour)
 {
     m_colour = newColour;
-
     const QString COLOR_STYLE("QPushButton { background-color : %1 }");
     setStyleSheet(COLOR_STYLE.arg(m_colour.name()));
 }

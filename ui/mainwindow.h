@@ -29,6 +29,8 @@
 #include "../program/globals.h"
 #include <QThread>
 #include <ogdf/energybased/FMMMLayout.h>
+#include "colourbutton.h"
+#include <QItemSelection>
 
 class GraphicsViewZoom;
 class MyGraphicsScene;
@@ -71,6 +73,7 @@ private:
     void zoomToFitRect(QRectF rect);
     void zoomToFitScene();
     void setZoomSpinBoxStep();
+    void fillBarcodeTable();
     void removeAllGraphicsEdgesFromNode(DeBruijnNode * node);
     void getSelectedNodeInfo(int & selectedNodeCount, QString & selectedNodeCountText, QString & selectedNodeListText, QString & selectedNodeLengthText);
     QString getSelectedEdgeListText();
@@ -137,6 +140,8 @@ private slots:
     void startingNodesExactMatchChanged();
     void openPathSpecifyDialog();
     void nodeWidthChanged();
+    void refreshDisplay();
+    void setBarcodeSelectionNode(const QItemSelection &, const QItemSelection &);
 
 protected:
       void showEvent(QShowEvent *ev);

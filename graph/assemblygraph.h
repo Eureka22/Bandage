@@ -43,7 +43,6 @@ public:
     QMap<QString, DeBruijnNode*> m_deBruijnGraphNodes;
     std::vector<DeBruijnEdge*> m_deBruijnGraphEdges;
 
-    QMap<QString, std::vector<Barcode* > > barocde_map;
 
     ogdf::Graph * m_ogdfGraph;
     ogdf::GraphAttributes * m_graphAttributes;

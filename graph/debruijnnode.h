@@ -71,13 +71,19 @@ public:
     bool isNodeConnected(DeBruijnNode * node) const;
     const std::vector<BlastHit *> * getBlastHitsPointer() const {return &m_blastHits;}
     bool thisNodeHasBlastHits() const {return m_blastHits.size() > 0;}
+    bool thisNodeHasBarcode() const {return m_barcodes.size() > 0;}
+
     bool thisNodeOrReverseComplementHasBlastHits() const {return m_blastHits.size() > 0 || getReverseComplement()->m_blastHits.size() > 0;}
+    bool thisNodeOrReverseComplementHasBarcode() const {return m_barcodes.size() > 0 || getReverseComplement()->m_barcodes.size() > 0;}
+
     DeBruijnEdge * doesNodeLeadIn(DeBruijnNode * node) const;
     DeBruijnEdge * doesNodeLeadAway(DeBruijnNode * node) const;
     std::vector<BlastHitPart> getBlastHitPartsForThisNode(double scaledNodeLength) const;
     std::vector<BarcodePart> getBarcodePartsForThisNode(double scaledNodeLength) const;
 
     std::vector<BlastHitPart> getBlastHitPartsForThisNodeOrReverseComplement(double scaledNodeLength) const;
+    std::vector<BarcodePart> getBarcodePartsForThisNodeOrReverseComplement(double scaledNodeLength) const;
+
 
     //MODIFERS
     void setReadDepthRelativeToMeanDrawnReadDepth(double newVal) {m_readDepthRelativeToMeanDrawnReadDepth = newVal;}
@@ -118,7 +124,7 @@ private:
     QString m_customLabel;
     std::vector<BlastHit *> m_blastHits;
 
-    std::vector<Barcode *>m_barcodes;
+    std::vector<Barcode *> m_barcodes;
 
     int getBasePairsPerSegment() const;
     bool isOnlyPathInItsDirection(DeBruijnNode * connectedNode,

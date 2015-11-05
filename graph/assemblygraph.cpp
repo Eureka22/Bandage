@@ -730,7 +730,7 @@ void AssemblyGraph::buildDeBruijnGraphFromFastg(QString fullFileName)
 
     autoDetermineAllEdgesExactOverlap();
 
-    qDebug("no fun") ;
+    //qDebug("no fun") ;
     if (m_deBruijnGraphNodes.size() == 0)
         throw "load error";
 }
@@ -882,15 +882,16 @@ void AssemblyGraph::buildDeBruijnGraphFromFastgBC(QString fullFileName, QString 
             QString node_name1 = node_name + "+";
             QString node_name2 = node_name + "-";
             if (m_deBruijnGraphNodes.contains(node_name1) && m_deBruijnGraphNodes.contains(node_name2)) {
-                Barcode * bc = new Barcode( barcode_, node_name, pos,  strand);
-                m_deBruijnGraphNodes[node_name1]->addBarcode(bc);
-                m_deBruijnGraphNodes[node_name2]->addBarcode(bc);
+                //qDebug() << barcode_;
+                Barcode * bc = new Barcode( barcode_, node_name, pos,  strand, m_deBruijnGraphNodes[node_name1]->getLength(),100);
+                //m_deBruijnGraphNodes[node_name1]->addBarcode(bc);
+                //m_deBruijnGraphNodes[node_name2]->addBarcode(bc);
 
-                if (!this->barocde_map.contains(node_name))
+                if (!g_barcode_manager->barocde_map.contains(barcode_))
                 {
-                    this->barocde_map[node_name] = std::vector<Barcode *> ();
+                    g_barcode_manager->barocde_map[barcode_] = std::vector<Barcode *> ();
                 }
-                this->barocde_map[node_name].push_back(bc);
+                g_barcode_manager->barocde_map[barcode_].push_back(bc);
             }
         }
     }
@@ -1064,7 +1065,7 @@ GraphFileType AssemblyGraph::getGraphFileTypeFromFile(QString fullFileName)
         return LAST_GRAPH;
     if (checkFileIsFastG(fullFileName))
     {
-        qDebug()<<fullFileName + ".barcode";
+        //qDebug()<<fullFileName + ".barcode";
         if (fileExists(fullFileName + ".barcode"))
             return FASTG_BC;
         else
@@ -1119,7 +1120,7 @@ bool AssemblyGraph::checkFirstLineOfFile(QString fullFileName, QString regExp)
             return false;
         QRegExp rx(regExp);
         QString line = in.readLine();
-        qDebug()<<line;
+        //qDebug()<<line;
         if (rx.indexIn(line) != -1)
             return true;
     }

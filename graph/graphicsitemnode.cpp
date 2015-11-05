@@ -44,6 +44,7 @@
 #include <cmath>
 #include <QFontMetrics>
 #include "../program/memory.h"
+#include <QDebug>
 
 GraphicsItemNode::GraphicsItemNode(DeBruijnNode * deBruijnNode,
                                    ogdf::GraphAttributes * graphAttributes, QGraphicsItem * parent) :
@@ -149,14 +150,19 @@ void GraphicsItemNode::paint(QPainter * painter, const QStyleOptionGraphicsItem 
         painter->setClipping(false);
     }
 
+    bool nodeHasBarcode;
+    if (g_settings->doubleMode)
+        nodeHasBarcode = m_deBruijnNode->thisNodeHasBarcode();
+    else
+        nodeHasBarcode = m_deBruijnNode->thisNodeOrReverseComplementHasBarcode();
+    //qDebug() << nodeHasBarcode;
+    //qDebug() << "want to draw";
+    //qDebug() << g_settings->nodeColourScheme;
 
-
-/*
-    if (nodeHasBlastHits && (g_settings->nodeColourScheme == BLAST_HITS_RAINBOW_COLOUR ||
-            g_settings->nodeColourScheme == BLAST_HITS_SOLID_COLOUR))
+    if (nodeHasBarcode && (g_settings->nodeColourScheme == BARCODE_COLOR))
     {
-        std::vector<BlastHitPart> parts;
-
+        std::vector<BarcodePart> parts;
+        //qDebug() << "has barcode";
         //The scaled node length is passed to the function which makes the
         //BlastHitPart objects, because we don't want those parts to be much
         //less than 1 pixel in size, which isn't necessary and can cause weird
@@ -165,14 +171,17 @@ void GraphicsItemNode::paint(QPainter * painter, const QStyleOptionGraphicsItem 
 
         if (g_settings->doubleMode)
         {
-            if (m_deBruijnNode->thisNodeHasBlastHits())
-                parts = m_deBruijnNode->getBlastHitPartsForThisNode(scaledNodeLength);
+            if (m_deBruijnNode->thisNodeHasBarcode())
+                parts = m_deBruijnNode->getBarcodePartsForThisNode(scaledNodeLength);
+
         }
-        else
+        else //single mode
         {
-            if (m_deBruijnNode->thisNodeOrReverseComplementHasBlastHits())
-                parts = m_deBruijnNode->getBlastHitPartsForThisNodeOrReverseComplement(scaledNodeLength);
+            if (m_deBruijnNode->thisNodeOrReverseComplementHasBarcode())
+                parts = m_deBruijnNode->getBarcodePartsForThisNodeOrReverseComplement(scaledNodeLength);
         }
+
+        //qDebug()<<parts.size();
 
         QPen partPen;
         partPen.setWidthF(m_width);
@@ -196,7 +205,7 @@ void GraphicsItemNode::paint(QPainter * painter, const QStyleOptionGraphicsItem 
         painter->setClipping(false);
     }
 
-*/
+
 
     //Draw the node outline
     QColor outlineColour = g_settings->outlineColour;

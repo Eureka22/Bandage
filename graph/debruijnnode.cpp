@@ -380,9 +380,9 @@ std::vector<BarcodePart> DeBruijnNode::getBarcodePartsForThisNode(double scaledN
 {
     std::vector<BarcodePart> returnVector;
 
-    for (size_t i = 0; i < m_blastHits.size(); ++i)
+    for (size_t i = 0; i < m_barcodes.size(); ++i)
     {
-        std::vector<BarcodePart> hitParts = m_barcodes[i]->getBarcodeParts(false, scaledNodeLength);
+        std::vector<BarcodePart> hitParts = m_barcodes[i]->getBarcodeParts(isNegativeNode(), scaledNodeLength);
         returnVector.insert(returnVector.end(), hitParts.begin(), hitParts.end());
     }
 
@@ -411,6 +411,31 @@ std::vector<BlastHitPart> DeBruijnNode::getBlastHitPartsForThisNodeOrReverseComp
         returnVector.insert(returnVector.end(), hitParts.begin(), hitParts.end());
     }
 
+    return returnVector;
+}
+
+
+std::vector<BarcodePart> DeBruijnNode::getBarcodePartsForThisNodeOrReverseComplement(double scaledNodeLength) const
+{
+    const DeBruijnNode * positiveNode = this;
+    const DeBruijnNode * negativeNode = getReverseComplement();
+    if (isNegativeNode())
+        std::swap(positiveNode, negativeNode);
+
+    //Look for blast hit parts on both the positive and the negative node,
+    //since hits were previously filtered such that startPos < endPos,
+    //hence we need to look at both positive and negative nodes to recover all hits.
+    std::vector<BarcodePart> returnVector;
+    for (size_t i = 0; i < positiveNode->m_barcodes.size(); ++i)
+    {
+        std::vector<BarcodePart> hitParts = positiveNode->m_barcodes[i]->getBarcodeParts(false, scaledNodeLength);
+        returnVector.insert(returnVector.end(), hitParts.begin(), hitParts.end());
+    }
+    for (size_t i = 0; i < negativeNode->m_barcodes.size(); ++i)
+    {
+        std::vector<BarcodePart> hitParts = negativeNode->m_barcodes[i]->getBarcodeParts(false, scaledNodeLength);
+        returnVector.insert(returnVector.end(), hitParts.begin(), hitParts.end());
+    }
     return returnVector;
 }
 

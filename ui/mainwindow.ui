@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1301</width>
-    <height>1108</height>
+    <width>1501</width>
+    <height>1264</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -59,8 +59,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>250</width>
-         <height>1062</height>
+         <width>247</width>
+         <height>1218</height>
         </rect>
        </property>
        <property name="sizePolicy">
@@ -794,6 +794,11 @@
                   <string>Custom colours</string>
                  </property>
                 </item>
+                <item>
+                 <property name="text">
+                  <string>Barcode colours</string>
+                 </property>
+                </item>
                </widget>
               </item>
               <item row="0" column="1">
@@ -1224,9 +1229,7 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="QWidget" name="widget_15" native="true">
-         <zorder>selectionScrollArea</zorder>
-        </widget>
+        <widget class="QWidget" name="widget_15" native="true"/>
        </item>
       </layout>
      </widget>
@@ -1247,8 +1250,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>228</width>
-         <height>1062</height>
+         <width>274</width>
+         <height>1218</height>
         </rect>
        </property>
        <property name="sizePolicy">
@@ -1666,6 +1669,43 @@
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="refreshDispButton">
+          <property name="text">
+           <string>Refresh Display</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTableWidget" name="barcodeTable">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <column>
+           <property name="text">
+            <string/>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Barcode</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Color</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string># Barcodes</string>
+           </property>
+          </column>
+         </widget>
+        </item>
+        <item>
          <spacer name="verticalSpacer_5">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
@@ -1689,7 +1729,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1301</width>
+     <width>1501</width>
      <height>22</height>
     </rect>
    </property>

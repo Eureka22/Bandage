@@ -66,7 +66,8 @@ int main(int argc, char *argv[])
     g_blastSearch.reset(new BlastSearch());
     g_assemblyGraph.reset(new AssemblyGraph());
     g_graphicsView = new MyGraphicsView();
-    g_barcode_selected.reset(new QStringList());
+    //g_barcode_selected.reset(new QStringList());
+    g_barcode_manager.reset(new BarcodeManager());
 
     QStringList arguments = QCoreApplication::arguments();
     arguments.pop_front();

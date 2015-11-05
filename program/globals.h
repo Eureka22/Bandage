@@ -23,6 +23,8 @@
 #include <QString>
 #include <QProcess>
 #include <QSharedPointer>
+#include "graph/barcodemanager.h"
+
 
 class Settings;
 class Memory;
@@ -62,7 +64,8 @@ extern MyGraphicsView * g_graphicsView;
 extern double g_absoluteZoom;
 extern QSharedPointer<BlastSearch> g_blastSearch;
 extern QSharedPointer<AssemblyGraph> g_assemblyGraph;
-extern QSharedPointer<QStringList> g_barcode_selected;
+//extern QSharedPointer<QStringList> g_barcode_selected;
+extern QSharedPointer<BarcodeManager> g_barcode_manager;
 
 
 //Functions for formatting numbers are used in many places, and are made global.

@@ -65,6 +65,7 @@
 #include "../program/memory.h"
 #include <QDebug>
 #include "program/globals.h"
+#include "graph/barcodesetting.h"
 
 MainWindow::MainWindow(QString fileToLoadOnStartup, bool drawGraphAfterLoad) :
     QMainWindow(0),
@@ -148,6 +149,8 @@ MainWindow::MainWindow(QString fileToLoadOnStartup, bool drawGraphAfterLoad) :
     connect(ui->selectNodesButton, SIGNAL(clicked()), this, SLOT(selectUserSpecifiedNodes()));
     connect(ui->selectionSearchNodesLineEdit, SIGNAL(returnPressed()), this, SLOT(selectUserSpecifiedNodes()));
     connect(ui->setBarcodeButton, SIGNAL(clicked()), this, SLOT(selectUserSpecifiedBarcodes()));
+    connect(ui->refreshDispButton, SIGNAL(clicked()), this, SLOT(refreshDisplay()));
+
     connect(ui->barcodeInput, SIGNAL(returnPressed()), this, SLOT(selectUserSpecifiedBarcodes()));
     connect(ui->actionAbout, SIGNAL(triggered()), this, SLOT(openAboutDialog()));
     connect(ui->blastSearchButton, SIGNAL(clicked()), this, SLOT(openBlastSearchDialog()));
@@ -171,6 +174,7 @@ MainWindow::MainWindow(QString fileToLoadOnStartup, bool drawGraphAfterLoad) :
     connect(ui->nodeWidthSpinBox, SIGNAL(valueChanged(double)), this, SLOT(nodeWidthChanged()));
     connect(g_graphicsView, SIGNAL(copySelectedSequencesToClipboard()), this, SLOT(copySelectedSequencesToClipboard()));
     connect(g_graphicsView, SIGNAL(saveSelectedSequencesToFile()), this, SLOT(saveSelectedSequencesToFile()));
+    connect(ui->barcodeTable->selectionModel(), SIGNAL(selectionChanged(const QItemSelection &, const QItemSelection &)), SLOT(setBarcodeSelectionNode(const QItemSelection &, const QItemSelection &)));
 
     connect(this, SIGNAL(windowLoaded()), this, SLOT(afterMainWindowShow()), Qt::ConnectionType(Qt::QueuedConnection | Qt::UniqueConnection));
 
@@ -306,7 +310,7 @@ void MainWindow::loadGraph(QString fullFileName)
             if (reply == QMessageBox::No)
                 return;
         }
-        qDebug() << selectedFileType;
+        //qDebug() << selectedFileType;
         loadGraph2(selectedFileType, fullFileName);
     }
 }
@@ -1389,13 +1393,29 @@ void MainWindow::openSettingsDialog()
 void MainWindow::selectUserSpecifiedBarcodes()
 {
 
+    if (g_barcode_manager->barcode_selected.contains(ui->barcodeInput->text().simplified()))
+    {
+        QMessageBox::warning(NULL, "Warning", "Barcode already set!");
+        ui->barcodeInput->clear();
+        return;
+    }
 
+    if (!g_barcode_manager->barocde_map.contains(ui->barcodeInput->text().simplified())){
+        QMessageBox::warning(NULL, "Warning", "Barcode don\'t exist in data!");
+        ui->barcodeInput->clear();
+        return;
+    }
 
-    g_barcode_selected->append(ui->barcodeInput->text());
+    //g_barcode_manager->barcode_selected.append(ui->barcodeInput->text().simplified());
+    g_barcode_manager->add_barcode(ui->barcodeInput->text().simplified());
+
+    //g_barcode_manager->add_barcode(ui->barcodeInput->text());
     ui->barcodeInput->clear();
-    qDebug() << g_barcode_selected;
-    for (int i = 0; i<g_barcode_selected->size(); i++ )
-        qDebug() << g_barcode_selected->at(i);
+    //for (int i = 0; i<g_barcode_manager->barcode_selected.size(); i++ )
+    //    qDebug() << g_barcode_manager->barcode_selected.at(i);
+    //qDebug() << ui->barcodeInput->text().simplified();
+    fillBarcodeTable();
+    refreshDisplay();
 
     //QMessageBox::information(this, "Barcodes not found", "ohh");
     /*if (g_assemblyGraph->checkIfStringHasNodes(ui->selectionSearchNodesLineEdit->text()))
@@ -2188,4 +2208,219 @@ void MainWindow::nodeWidthChanged()
     g_settings->averageNodeWidth = ui->nodeWidthSpinBox->value();
     g_assemblyGraph->recalculateAllNodeWidths();
     g_graphicsView->viewport()->update();
+}
+
+
+void MainWindow::fillBarcodeTable()
+{
+
+        ui->barcodeTable->clearContents();
+        ui->barcodeTable->setSortingEnabled(false);
+
+        int barcodeCount = g_barcode_manager->barcode_selected.size();
+        ui->barcodeTable->setRowCount(barcodeCount);
+
+        if (barcodeCount == 0)
+            return;
+
+        for (int i = 0; i < barcodeCount; ++i)
+        {
+
+            QTableWidgetItem * queryColour = new QTableWidgetItem(g_barcode_manager->presetColours.at(i).name().at(0));
+            queryColour->setFlags(Qt::ItemIsEnabled);
+            queryColour->setBackground(g_barcode_manager->presetColours.at(i));
+            //
+            //QTableWidgetItem * queryName = new QTableWidgetItem(hitQuery->getName());
+            //queryName->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+            //
+            //QTableWidgetItem * nodeName = new QTableWidgetItem(hit->m_node->getName());
+            //nodeName->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+            //
+            //TableWidgetItemDouble * percentIdentity = new TableWidgetItemDouble(QString::number(hit->m_percentIdentity) + "%", hit->m_percentIdentity);
+            //percentIdentity->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+            //
+            //TableWidgetItemInt * alignmentLength = new TableWidgetItemInt(formatIntForDisplay(hit->m_alignmentLength), hit->m_alignmentLength);
+            //alignmentLength->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+            //
+            //TableWidgetItemInt * numberMismatches = new TableWidgetItemInt(formatIntForDisplay(hit->m_numberMismatches), hit->m_numberMismatches);
+            //numberMismatches->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+            //
+            //TableWidgetItemInt * numberGapOpens = new TableWidgetItemInt(formatIntForDisplay(hit->m_numberGapOpens), hit->m_numberGapOpens);
+            //numberGapOpens->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+            //
+            //TableWidgetItemInt * queryStart = new TableWidgetItemInt(formatIntForDisplay(hit->m_queryStart), hit->m_queryStart);
+            //queryStart->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+            //
+            //TableWidgetItemInt * queryEnd = new TableWidgetItemInt(formatIntForDisplay(hit->m_queryEnd), hit->m_queryEnd);
+            //queryEnd->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+            //
+            //TableWidgetItemInt * nodeStart = new TableWidgetItemInt(formatIntForDisplay(hit->m_nodeStart), hit->m_nodeStart);
+            //nodeStart->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+            //
+            //TableWidgetItemInt * nodeEnd = new TableWidgetItemInt(formatIntForDisplay(hit->m_nodeEnd), hit->m_nodeEnd);
+            //nodeEnd->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+            //
+            //TableWidgetItemDouble * eValue = new TableWidgetItemDouble(QString::number(hit->m_eValue), hit->m_eValue);
+            //eValue->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+            //
+            //TableWidgetItemDouble * bitScore = new TableWidgetItemDouble(QString::number(hit->m_bitScore), hit->m_bitScore);
+            //bitScore->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+            QString b = g_barcode_manager->barcode_selected.at(i);
+
+            QTableWidgetItem * barcode = new QTableWidgetItem(g_barcode_manager->barcode_selected.at(i));
+            QTableWidgetItem * barcode_count = new QTableWidgetItem(QString::number(g_barcode_manager->get_barcode_count(g_barcode_manager->barcode_selected.at(i))));
+            ColourButton * colourButton = new ColourButton();
+
+            if (g_barcode_manager->barcode_settings.contains(b))
+            {
+                //qDebug()<<"contains";
+                BarcodeSetting* bs = g_barcode_manager->barcode_settings[b];
+                colourButton->setColour(g_barcode_manager->presetColours.at(i));
+                //qDebug()<<bs;
+                //qDebug()<<bs->m_barcode << bs->m_active << bs->m_color;
+                if (bs!=NULL){
+                colourButton->setColour(bs->m_color);
+                connect(colourButton, SIGNAL(colourChosen(QColor)), bs, SLOT(setColour(QColor)));
+                connect(colourButton, SIGNAL(colourChosen(QColor)), this, SLOT(refreshDisplay()));
+
+
+
+
+                }
+            }
+            else
+                colourButton->setColour(g_barcode_manager->presetColours.at(i));
+
+
+
+            QWidget * showCheckBoxWidget = new QWidget;
+            QCheckBox * showCheckBox = new QCheckBox();
+            QHBoxLayout * layout = new QHBoxLayout(showCheckBoxWidget);
+            layout->addWidget(showCheckBox);
+            layout->setAlignment(Qt::AlignCenter);
+            layout->setContentsMargins(0, 0, 0, 0);
+            showCheckBoxWidget->setLayout(layout);
+            bool barcodeshown;
+            if (g_barcode_manager->barcode_settings.contains(b))
+            {
+                BarcodeSetting* bs = g_barcode_manager->barcode_settings[b];
+                barcodeshown = bs->m_active;
+                connect(showCheckBox, SIGNAL(toggled(bool)), bs, SLOT(setShown(bool)));
+                connect(showCheckBox, SIGNAL(toggled(bool)), this, SLOT(refreshDisplay()));
+            }
+            else
+            {
+                barcodeshown = false;
+            }
+
+            showCheckBox->setChecked(barcodeshown);
+            QTableWidgetItem * show = new QTableWidgetItem(barcodeshown);
+            show->setFlags(Qt::ItemIsEnabled);
+
+
+            ui->barcodeTable ->setCellWidget(i,2,colourButton);
+            ui->barcodeTable ->setItem(i, 1, barcode);
+            ui->barcodeTable ->setItem(i,0, queryColour );
+            ui->barcodeTable ->setItem(i, 3, barcode_count);
+            ui->barcodeTable ->setCellWidget(i, 0, showCheckBoxWidget);
+            ui->barcodeTable ->setItem(i, 0, show);
+
+        }
+
+        ui->barcodeTable ->resizeColumnsToContents();
+        ui->barcodeTable->setEnabled(true);
+        ui->barcodeTable->setSortingEnabled(true);
+}
+
+void MainWindow::setBarcodeSelectionNode(const QItemSelection &, const QItemSelection &){
+    int foundNode = 0;
+    //qDebug()<< "selection changed!";
+    QModelIndexList selection = ui->barcodeTable->selectionModel()->selectedRows();
+    QList<int>selected;
+    for(int i=0; i< selection.count(); i++)
+    {
+        QModelIndex index = selection.at(i);
+        //qDebug() << index.row();
+        selected.append(index.row());
+    }
+
+    for (int i = 0; i < selected.size(); i++){
+        QString barcode = g_barcode_manager->barcode_selected[selected[i]];
+        if (g_barcode_manager->barocde_map.contains(barcode))
+            for (int j = 0; j < g_barcode_manager->barocde_map[barcode].size(); j++){
+                Barcode* current = g_barcode_manager->barocde_map[barcode].at(j);
+                QString node;
+                if (current->m_strand == 1)
+                    node = current->m_contig + '-';
+                else
+                    node = current->m_contig + '+';
+
+                if (g_assemblyGraph->m_deBruijnGraphNodes.contains(node))
+                {
+                    DeBruijnNode * db_node = g_assemblyGraph->m_deBruijnGraphNodes[node];
+                    GraphicsItemNode* g_node = db_node->getGraphicsItemNode();
+                    if (g_node!=0)
+                    {
+                        g_node->setSelected(true);
+                        ++foundNode;
+                    }
+                }
+            }
+    }
+    //qDebug()<<foundNode;
+    if (foundNode > 0)
+        zoomToSelection();
+}
+
+
+void MainWindow::refreshDisplay(){
+    //qDebug()<<"refresh";
+    for (int i = 0; i<g_barcode_manager->barcode_selected.size(); i++){
+        QString b = g_barcode_manager->barcode_selected.at(i);
+        if (g_barcode_manager->barocde_map.contains(b))
+            //if (g_barcode_manager->barcode_settings.contains(b))
+            //    if (g_barcode_manager->barcode_settings[b]->m_active)
+
+            for (int j = 0; j<g_barcode_manager->barocde_map[b].size(); j++){
+                Barcode* current = g_barcode_manager->barocde_map[b].at(j);
+                /*if (g_assemblyGraph->m_deBruijnGraphNodes.contains(current->m_contig + '+')){
+                    g_assemblyGraph->m_deBruijnGraphNodes[current->m_contig + '+']->addBarcode(current);
+                    current->setColor(g_barcode_manager->presetColours.at(i));
+                    //qDebug() << current->m_contig + '+';
+                */
+
+                if (current->m_strand == 0) // not reverse
+                {
+                    if (g_assemblyGraph->m_deBruijnGraphNodes.contains(current->m_contig + '+')){
+                                        g_assemblyGraph->m_deBruijnGraphNodes[current->m_contig + '+']->addBarcode(current);
+
+                                        if (g_barcode_manager->barcode_settings.contains(b)){
+                                            current->setColor(g_barcode_manager->barcode_settings[b]->m_color);
+                                        }
+                                        else
+                                            current->setColor(g_barcode_manager->presetColours.at(i));
+                    }
+                }
+                else // reverse
+                {
+                    if (g_assemblyGraph->m_deBruijnGraphNodes.contains(current->m_contig + '-')){
+                                        g_assemblyGraph->m_deBruijnGraphNodes[current->m_contig + '-']->addBarcode(current);
+                                        if (g_barcode_manager->barcode_settings.contains(b)){
+                                            current->setColor(g_barcode_manager->barcode_settings[b]->m_color);
+                                        }
+                                        else
+                                            current->setColor(g_barcode_manager->presetColours.at(i));
+                    }
+                }
+
+            }
+    }
+
+
+    m_scene->blockSignals(false);
+    g_graphicsView->viewport()->update();
+
+
+
+
 }

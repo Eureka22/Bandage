@@ -75,7 +75,9 @@ SOURCES += \
     ui/querypathsdialog.cpp \
     blast/blastquerypath.cpp \
     graph/barcode.cpp \
-    graph/barcodepart.cpp
+    graph/barcodepart.cpp \
+    graph/barcodemanager.cpp \
+    graph/barcodesetting.cpp
 
 HEADERS  += \
     program/settings.h \
@@ -125,7 +127,9 @@ HEADERS  += \
     ui/querypathsdialog.h \
     blast/blastquerypath.h \
     graph/barcode.h \
-    graph/barcodepart.h
+    graph/barcodepart.h \
+    graph/barcodemanager.h \
+    graph/barcodesetting.h
 
 FORMS    += \
     ui/mainwindow.ui \
